@@ -1,5 +1,5 @@
-import React from 'react';
-import { Row, Col, Card, Statistic, Progress, List, Tag, Button } from 'antd';
+import React, { useEffect, useState } from 'react';
+import { Row, Col, Card, Statistic, Progress, List, Tag, Button, message } from 'antd';
 import { 
   ClockCircleOutlined, 
   CheckCircleOutlined, 
@@ -9,54 +9,84 @@ import {
   TargetOutlined
 } from '@ant-design/icons';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import taskService from '../services/taskService';
+import analyticsService from '../services/analyticsService';
+import type { Task } from '../services/taskService';
+import type { TimeStats } from '../services/analyticsService';
 
 const Dashboard: React.FC = () => {
-  // 模拟数据
-  const todayStats = [
-    { name: '9:00', value: 30 },
-    { name: '12:00', value: 80 },
-    { name: '15:00', value: 45 },
-    { name: '18:00', value: 90 },
-    { name: '21:00', value: 60 }
-  ];
+  const [loading, setLoading] = useState(false);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [stats, setStats] = useState<TimeStats | null>(null);
 
-  const taskStats = [
-    { title: '今日任务', value: 8, completed: 5, icon: <CheckCircleOutlined /> },
-    { title: '本周任务', value: 25, completed: 18, icon: <TargetOutlined /> },
-    { title: '专注时长', value: '4.5h', suffix: 'h', icon: <ClockCircleOutlined /> },
-    { title: '完成率', value: 85, suffix: '%', icon: <TrendingUpOutlined /> }
-  ];
+  useEffect(() => {
+    loadDashboardData();
+  }, []);
 
-  const recentTasks = [
-    { title: '完成项目报告', status: '已完成', priority: '高', time: '2小时前' },
-    { title: '客户会议准备', status: '进行中', priority: '中', time: '30分钟前' },
-    { title: '代码审查', status: '待开始', priority: '低', time: '1小时前' },
-    { title: '团队周会', status: '已完成', priority: '高', time: '3小时前' }
-  ];
+  const loadDashboardData = async () => {
+    try {
+      setLoading(true);
+      
+      // 加载任务列表
+      const tasksData = await taskService.getTasks();
+      setTasks(tasksData.slice(0, 4)); // 只显示最近4个任务
+      
+      // 加载统计数据
+      const statsData = await analyticsService.getTimeStats('day');
+      setStats(statsData);
+      
+    } catch (error: any) {
+      console.error('加载数据失败:', error);
+      message.error('加载数据失败');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case '高': return 'red';
-      case '中': return 'orange';
-      case '低': return 'green';
+      case 'HIGH': return 'red';
+      case 'MEDIUM': return 'orange';
+      case 'LOW': return 'green';
       default: return 'default';
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case '已完成': return 'success';
-      case '进行中': return 'processing';
-      case '待开始': return 'default';
+      case 'COMPLETED': return 'success';
+      case 'IN_PROGRESS': return 'processing';
+      case 'TODO': return 'default';
+      case 'CANCELLED': return 'error';
       default: return 'default';
     }
   };
+
+  const completedTasks = tasks.filter(t => t.status === 'COMPLETED').length;
+  const totalTasks = tasks.length;
+  const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
+  // 模拟今日时间分布数据
+  const todayStats = [
+    { name: '9:00', value: 30 },
+    { name: '12:00', value: 45 },
+    { name: '15:00', value: 60 },
+    { name: '18:00', value: 30 },
+    { name: '21:00', value: 45 }
+  ];
+
+  const taskStats = [
+    { title: '今日任务', value: totalTasks, completed: completedTasks, icon: <CheckCircleOutlined /> },
+    { title: '专注时长', value: Math.round((stats?.totalTime || 0) / 60), suffix: 'h', icon: <ClockCircleOutlined /> },
+    { title: '完成率', value: completionRate, suffix: '%', icon: <TrendingUpOutlined /> },
+    { title: '总时长', value: Math.round((stats?.totalTime || 0) / 60), suffix: 'min', icon: <TargetOutlined /> }
+  ];
 
   return (
     <div>
       <Row gutter={[16, 16]}>
         <Col span={24}>
-          <Card title="今日概览" size="small">
+          <Card title="今日概览" size="small" loading={loading}>
             <Row gutter={[16, 16]}>
               {taskStats.map((stat, index) => (
                 <Col xs={24} sm={12} lg={6} key={index}>
@@ -70,7 +100,7 @@ const Dashboard: React.FC = () => {
                     />
                     {stat.title === '今日任务' && (
                       <Progress 
-                        percent={(stat.completed / stat.value) * 100} 
+                        percent={completionRate} 
                         size="small" 
                         showInfo={false}
                       />
@@ -100,24 +130,22 @@ const Dashboard: React.FC = () => {
         <Col xs={24} lg={8}>
           <Card title="最近任务" size="small">
             <List
-              dataSource={recentTasks}
-              renderItem={(item, index) => (
-                <List.Item
-                  actions={[
-                    <Button type="link" size="small">查看</Button>
-                  ]}
-                >
+              dataSource={tasks}
+              renderItem={(item) => (
+                <List.Item>
                   <List.Item.Meta
                     title={
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <span>{item.title}</span>
-                        <Tag color={getPriorityColor(item.priority)}>{item.priority}</Tag>
+                        <Tag color={getPriorityColor(item.priority)}>{item.priority === 'HIGH' ? '高' : item.priority === 'MEDIUM' ? '中' : '低'}</Tag>
                       </div>
                     }
                     description={
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <Tag color={getStatusColor(item.status)}>{item.status}</Tag>
-                        <span style={{ color: '#999' }}>{item.time}</span>
+                        <Tag color={getStatusColor(item.status)}>{item.status === 'COMPLETED' ? '已完成' : item.status === 'IN_PROGRESS' ? '进行中' : item.status === 'TODO' ? '待开始' : '已取消'}</Tag>
+                        <span style={{ color: '#999' }}>
+                          {new Date(item.createdAt).toLocaleDateString()}
+                        </span>
                       </div>
                     }
                   />

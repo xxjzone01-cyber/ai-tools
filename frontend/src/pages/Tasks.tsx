@@ -23,25 +23,11 @@ import {
   ExclamationCircleOutlined
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
+import taskService from '../services/taskService';
+import type { Task, CreateTaskRequest, UpdateTaskRequest } from '../services/taskService';
 
 const { Option } = Select;
 const { Search } = Input;
-
-interface Task {
-  id: string;
-  title: string;
-  description?: string;
-  priority: 'LOW' | 'MEDIUM' | 'HIGH';
-  status: 'TODO' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
-  dueDate?: string;
-  estimatedTime?: number;
-  actualTime?: number;
-  category?: {
-    name: string;
-    color: string;
-  };
-  createdAt: string;
-}
 
 const Tasks: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -50,47 +36,22 @@ const Tasks: React.FC = () => {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [form] = Form.useForm();
 
-  // 模拟数据
   useEffect(() => {
-    const mockTasks: Task[] = [
-      {
-        id: '1',
-        title: '完成项目报告',
-        description: '准备Q4季度项目总结报告',
-        priority: 'HIGH',
-        status: 'IN_PROGRESS',
-        dueDate: '2026-03-18',
-        estimatedTime: 120,
-        actualTime: 60,
-        category: { name: '工作', color: '#1890ff' },
-        createdAt: '2026-03-16T08:00:00Z'
-      },
-      {
-        id: '2',
-        title: '客户会议准备',
-        description: '准备与ABC公司的会议材料',
-        priority: 'MEDIUM',
-        status: 'TODO',
-        dueDate: '2026-03-17',
-        estimatedTime: 90,
-        category: { name: '工作', color: '#1890ff' },
-        createdAt: '2026-03-16T09:00:00Z'
-      },
-      {
-        id: '3',
-        title: '健身锻炼',
-        description: '晚上7点健身房锻炼',
-        priority: 'LOW',
-        status: 'COMPLETED',
-        dueDate: '2026-03-16',
-        estimatedTime: 60,
-        actualTime: 60,
-        category: { name: '个人', color: '#52c41a' },
-        createdAt: '2026-03-16T10:00:00Z'
-      }
-    ];
-    setTasks(mockTasks);
+    loadTasks();
   }, []);
+
+  const loadTasks = async () => {
+    try {
+      setLoading(true);
+      const data = await taskService.getTasks();
+      setTasks(data);
+    } catch (error: any) {
+      console.error('加载任务列表失败:', error);
+      message.error('加载任务列表失败');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const columns: ColumnsType<Task> = [
     {
@@ -211,9 +172,15 @@ const Tasks: React.FC = () => {
     setModalVisible(true);
   };
 
-  const handleDelete = (id: string) => {
-    setTasks(tasks.filter(task => task.id !== id));
-    message.success('任务删除成功');
+  const handleDelete = async (id: string) => {
+    try {
+      await taskService.deleteTask(id);
+      message.success('任务删除成功');
+      loadTasks();
+    } catch (error: any) {
+      console.error('删除任务失败:', error);
+      message.error('删除任务失败');
+    }
   };
 
   const handleSubmit = async () => {
@@ -222,25 +189,42 @@ const Tasks: React.FC = () => {
       
       if (editingTask) {
         // 编辑任务
-        setTasks(tasks.map(task => 
-          task.id === editingTask.id ? { ...task, ...values } : task
-        ));
+        await taskService.updateTask(editingTask.id, values as UpdateTaskRequest);
         message.success('任务更新成功');
       } else {
         // 新建任务
-        const newTask: Task = {
-          ...values,
-          id: Date.now().toString(),
-          createdAt: new Date().toISOString()
-        };
-        setTasks([...tasks, newTask]);
+        await taskService.createTask(values as CreateTaskRequest);
         message.success('任务创建成功');
       }
       
       setModalVisible(false);
       form.resetFields();
+      loadTasks();
     } catch (error) {
       console.error('表单提交失败:', error);
+      message.error('操作失败，请重试');
+    }
+  };
+
+  const handleCategorize = async (id: string) => {
+    try {
+      const result = await taskService.categorizeTask(id);
+      message.success('任务分类完成');
+      loadTasks();
+    } catch (error: any) {
+      console.error('任务分类失败:', error);
+      message.error('任务分类失败');
+    }
+  };
+
+  const handlePredict = async (id: string) => {
+    try {
+      const result = await taskService.predictTaskTime(id);
+      message.success('时间预测完成');
+      loadTasks();
+    } catch (error: any) {
+      console.error('时间预测失败:', error);
+      message.error('时间预测失败');
     }
   };
 
@@ -249,9 +233,17 @@ const Tasks: React.FC = () => {
       <Card 
         title="任务管理" 
         extra={
-          <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
-            新建任务
-          </Button>
+          <Space>
+            <Button 
+              onClick={() => loadTasks()} 
+              icon={<SearchOutlined />}
+            >
+              刷新
+            </Button>
+            <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
+              新建任务
+            </Button>
+          </Space>
         }
       >
         <div style={{ marginBottom: '16px' }}>
