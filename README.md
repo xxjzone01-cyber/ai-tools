@@ -6,7 +6,22 @@
 
 ### 在线体验（推荐部署方案）
 
-#### 方案一：Vercel部署（免费且快速）
+#### 方案一：Cloudflare Pages部署（免费且全球CDN）
+```bash
+# 1. 运行快速部署脚本
+./deploy-cloudflare.sh
+
+# 2. 在GitHub仓库中设置Secrets
+# CLOUDFLARE_API_TOKEN: Dabs02bW9BwZwCpu3kmMAR5iD48yRwk9HtSAsy9X
+# CLOUDFLARE_ACCOUNT_ID: 5cbfc2dac9b0828eb60202bcb1315e46
+
+# 3. 访问部署的网站
+# https://smart-time-manager.pages.dev
+```
+
+详细部署指南：[☁️ Cloudflare Pages部署](DEPLOYMENT_CLOUDFLARE.md)
+
+#### 方案二：Vercel部署（免费且快速）
 ```bash
 # 1. 获取免费PostgreSQL
 访问 Supabase: https://supabase.com
@@ -24,7 +39,7 @@ cd smart-time-manager/frontend
 vercel --prod
 ```
 
-详细部署指南：[查看完整部署指南](DEPLOYMENT_CLOUD_SERVICES.md)
+详细部署指南：[☁️ 查看云服务部署指南](DEPLOYMENT_CLOUD_SERVICES.md)
 
 #### 方案二：本地开发（推荐用于深度开发）
 ```bash
