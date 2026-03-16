@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
+import aiService from '../services/aiService';
 
 const prisma = new PrismaClient();
 
@@ -75,10 +76,46 @@ export const createTask = async (req: Request, res: Response) => {
     const userId = req.user.userId;
     const taskData: TaskRequest = req.body;
 
+    // 如果启用了自动分类，使用AI分类
+    let categoryId = taskData.categoryId;
+    if (!categoryId) {
+      try {
+        const classification = await aiService.classifyTask({
+          title: taskData.title,
+          description: taskData.description,
+          userId
+        });
+
+        // 查找或创建分类
+        let category = await prisma.category.findFirst({
+          where: {
+            userId,
+            name: classification.category
+          }
+        });
+
+        if (!category) {
+          category = await prisma.category.create({
+            data: {
+              userId,
+              name: classification.category,
+              color: getRandomColor()
+            }
+          });
+        }
+
+        categoryId = category.id;
+      } catch (error) {
+        console.warn('AI分类失败，使用默认分类:', error);
+      }
+    }
+
+    // 创建任务
     const task = await prisma.task.create({
       data: {
         ...taskData,
         userId,
+        categoryId,
         dueDate: taskData.dueDate ? new Date(taskData.dueDate) : null
       },
       include: {
@@ -163,44 +200,43 @@ export const categorizeTask = async (req: Request, res: Response) => {
       return res.status(404).json({ error: '任务不存在' });
     }
 
-    // 这里应该集成AI服务进行任务分类
-    // 现在返回一个模拟的分类结果
-    const categories = await prisma.category.findMany({
-      where: { userId }
+    // 使用AI进行任务分类
+    const classification = await aiService.classifyTask({
+      title: task.title,
+      description: task.description,
+      userId
     });
 
-    if (categories.length === 0) {
-      // 如果没有分类，创建一个默认分类
-      const defaultCategory = await prisma.category.create({
+    // 查找或创建分类
+    let category = await prisma.category.findFirst({
+      where: {
+        userId,
+        name: classification.category
+      }
+    });
+
+    if (!category) {
+      category = await prisma.category.create({
         data: {
-          name: '未分类',
-          color: '#808080',
-          userId
+          userId,
+          name: classification.category,
+          color: getRandomColor()
         }
       });
-
-      await prisma.task.update({
-        where: { id },
-        data: { categoryId: defaultCategory.id }
-      });
-
-      res.json({ 
-        message: '任务分类完成',
-        category: defaultCategory 
-      });
-    } else {
-      // 简单的规则分类（实际应该用AI）
-      const category = categories[0];
-      await prisma.task.update({
-        where: { id },
-        data: { categoryId: category.id }
-      });
-
-      res.json({ 
-        message: '任务分类完成',
-        category 
-      });
     }
+
+    // 更新任务分类
+    const updatedTask = await prisma.task.update({
+      where: { id },
+      data: { categoryId: category.id },
+      include: { category: true }
+    });
+
+    res.json({ 
+      message: '任务分类完成',
+      classification,
+      task: updatedTask
+    });
   } catch (error) {
     console.error('任务分类错误:', error);
     res.status(500).json({ error: '任务分类失败' });
@@ -213,33 +249,48 @@ export const predictTaskTime = async (req: Request, res: Response) => {
     const userId = req.user.userId;
 
     const task = await prisma.task.findFirst({
-      where: { id, userId }
+      where: { id, userId },
+      include: { category: true }
     });
 
     if (!task) {
       return res.status(404).json({ error: '任务不存在' });
     }
 
-    // 这里应该集成AI服务进行时间预测
-    // 现在返回一个模拟的预测结果
-    const estimatedTime = task.estimatedTime || 60; // 默认60分钟
-    const confidence = 0.75; // 模拟置信度
+    // 使用AI进行时间预测
+    const prediction = await aiService.predictTaskTime({
+      title: task.title,
+      description: task.description,
+      category: task.category?.name,
+      userId
+    });
 
-    const prediction = await prisma.prediction.create({
+    // 保存预测结果
+    const savedPrediction = await prisma.prediction.create({
       data: {
         userId,
         taskTitle: task.title,
-        predictedTime: estimatedTime,
-        confidence
+        predictedTime: prediction.estimatedTime,
+        confidence: prediction.confidence
       }
     });
 
     res.json({
       message: '时间预测完成',
-      prediction
+      prediction,
+      savedPrediction
     });
   } catch (error) {
     console.error('时间预测错误:', error);
     res.status(500).json({ error: '时间预测失败' });
   }
 };
+
+// 生成随机颜色
+function getRandomColor(): string {
+  const colors = [
+    '#1890ff', '#52c41a', '#fa8c16', '#f5222d', '#722ed1',
+    '#13c2c2', '#eb2f96', '#faad14', '#a0d911', '#096dd9'
+  ];
+  return colors[Math.floor(Math.random() * colors.length)];
+}

@@ -1,23 +1,29 @@
 import React, { useEffect, useState } from 'react';
-import { Row, Col, Card, Statistic, Progress, List, Tag, Button, message } from 'antd';
+import { Row, Col, Card, Statistic, Progress, List, Tag, Button, message, Alert } from 'antd';
 import { 
   ClockCircleOutlined, 
   CheckCircleOutlined, 
   ExclamationCircleOutlined,
   TrendingUpOutlined,
   CalendarOutlined,
-  TargetOutlined
+  TargetOutlined,
+  BellOutlined,
+  RobotOutlined
 } from '@ant-design/icons';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import taskService from '../services/taskService';
 import analyticsService from '../services/analyticsService';
+import aiService from '../services/aiService';
 import type { Task } from '../services/taskService';
 import type { TimeStats } from '../services/analyticsService';
+import type { SmartReminder } from '../services/aiService';
 
 const Dashboard: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [stats, setStats] = useState<TimeStats | null>(null);
+  const [reminders, setReminders] = useState<SmartReminder[]>([]);
+  const [remindersLoading, setRemindersLoading] = useState(false);
 
   useEffect(() => {
     loadDashboardData();
@@ -34,12 +40,28 @@ const Dashboard: React.FC = () => {
       // 加载统计数据
       const statsData = await analyticsService.getTimeStats('day');
       setStats(statsData);
+
+      // 加载智能提醒
+      await loadSmartReminders();
       
     } catch (error: any) {
       console.error('加载数据失败:', error);
       message.error('加载数据失败');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadSmartReminders = async () => {
+    try {
+      setRemindersLoading(true);
+      const response = await aiService.getSmartReminders();
+      setReminders(response.reminders);
+    } catch (error: any) {
+      console.error('加载智能提醒失败:', error);
+      // 不显示错误，智能提醒失败不影响其他功能
+    } finally {
+      setRemindersLoading(false);
     }
   };
 
@@ -82,8 +104,29 @@ const Dashboard: React.FC = () => {
     { title: '总时长', value: Math.round((stats?.totalTime || 0) / 60), suffix: 'min', icon: <TargetOutlined /> }
   ];
 
+  const getReminderColor = (reminderTime: string) => {
+    switch (reminderTime) {
+      case '立即': return 'error';
+      case '今天': return 'warning';
+      case '明天': return 'processing';
+      default: return 'default';
+    }
+  };
+
   return (
     <div>
+      {/* 智能提醒区域 */}
+      {reminders.length > 0 && (
+        <Alert
+          message="智能提醒"
+          description={<RobotOutlined style={{ marginRight: '8px' }} AI为您生成了{reminders.length}条智能提醒}
+          type="info"
+          showIcon
+          closable
+          style={{ marginBottom: '16px' }}
+        />
+      )}
+
       <Row gutter={[16, 16]}>
         <Col span={24}>
           <Card title="今日概览" size="small" loading={loading}>
@@ -114,6 +157,29 @@ const Dashboard: React.FC = () => {
       </Row>
 
       <Row gutter={[16, 16]} style={{ marginTop: '16px' }}>
+        <Col xs={24} lg={8}>
+          {/* 智能提醒卡片 */}
+          {reminders.length > 0 && (
+            <Card title={<><BellOutlined /> 智能提醒</Card>} size="small" loading={remindersLoading}>
+              <List
+                dataSource={reminders}
+                renderItem={(item) => (
+                  <List.Item>
+                    <List.Item.Meta
+                      title={
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontWeight: 'bold' }}>{item.taskTitle}</span>
+                          <Tag color={getReminderColor(item.reminderTime)}>{item.reminderTime}</Tag>
+                        </div>
+                      }
+                      description={item.reason}
+                    />
+                  </List.Item>
+                )}
+              />
+            </Card>
+          )}
+        </Col>
         <Col xs={24} lg={16}>
           <Card title="今日时间分布" size="small">
             <ResponsiveContainer width="100%" height={300}>
@@ -127,8 +193,11 @@ const Dashboard: React.FC = () => {
             </ResponsiveContainer>
           </Card>
         </Col>
+      </Row>
+
+      <Row gutter={[16, 16]} style={{ marginTop: '16px' }}>
         <Col xs={24} lg={8}>
-          <Card title="最近任务" size="small">
+          <Card title="最近任务" size="small" loading={loading}>
             <List
               dataSource={tasks}
               renderItem={(item) => (
@@ -154,10 +223,7 @@ const Dashboard: React.FC = () => {
             />
           </Card>
         </Col>
-      </Row>
-
-      <Row gutter={[16, 16]} style={{ marginTop: '16px' }}>
-        <Col span={24}>
+        <Col xs={24} lg={16}>
           <Card 
             title="快速操作" 
             size="small"

@@ -9,6 +9,8 @@ import authRoutes from './routes/auth';
 import taskRoutes from './routes/tasks';
 import userRoutes from './routes/users';
 import analyticsRoutes from './routes/analytics';
+import reminderRoutes from './routes/reminders';
+import timeTrackingRoutes from './routes/timeTracking';
 
 dotenv.config();
 
@@ -46,6 +48,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/reminders', reminderRoutes);
+app.use('/api/time-tracking', timeTrackingRoutes);
 
 // 错误处理中间件
 app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {

@@ -11,7 +11,11 @@ import {
   message,
   Space,
   Popconfirm,
-  Badge
+  Badge,
+  Row,
+  Col,
+  Statistic,
+  List
 } from 'antd';
 import { 
   PlusOutlined, 
@@ -20,11 +24,15 @@ import {
   DeleteOutlined,
   ClockCircleOutlined,
   CheckCircleOutlined,
-  ExclamationCircleOutlined
+  ExclamationCircleOutlined,
+  ThunderboltOutlined,
+  RobotOutlined
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import taskService from '../services/taskService';
 import type { Task, CreateTaskRequest, UpdateTaskRequest } from '../services/taskService';
+import aiService from '../services/aiService';
+import TimeTracker from '../components/TimeTracker';
 
 const { Option } = Select;
 const { Search } = Input;
@@ -34,6 +42,10 @@ const Tasks: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [aiModalVisible, setAiModalVisible] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [aiAdvice, setAiAdvice] = useState<any>(null);
+  const [aiLoading, setAiLoading] = useState(false);
   const [form] = Form.useForm();
 
   useEffect(() => {
@@ -137,13 +149,34 @@ const Tasks: React.FC = () => {
       title: '操作',
       key: 'action',
       render: (_, record) => (
-        <Space>
+        <Space wrap>
           <Button 
             type="link" 
             icon={<EditOutlined />} 
             onClick={() => handleEdit(record)}
           >
             编辑
+          </Button>
+          <Button 
+            type="link" 
+            icon={<RobotOutlined />}
+            onClick={() => handleAIClassify(record)}
+          >
+            AI分类
+          </Button>
+          <Button 
+            type="link" 
+            icon={<ThunderboltOutlined />}
+            onClick={() => handleAIPredict(record)}
+          >
+            AI预测
+          </Button>
+          <Button 
+            type="link" 
+            icon={<ExclamationCircleOutlined />}
+            onClick={() => handleAIAdvice(record)}
+          >
+            AI建议
           </Button>
           <Popconfirm
             title="确定要删除这个任务吗？"
@@ -206,67 +239,126 @@ const Tasks: React.FC = () => {
     }
   };
 
-  const handleCategorize = async (id: string) => {
+  const handleAIClassify = async (task: Task) => {
     try {
-      const result = await taskService.categorizeTask(id);
-      message.success('任务分类完成');
+      const result = await aiService.classifyTask(task.id);
+      message.success(`AI分类完成：${result.classification.category}`);
       loadTasks();
     } catch (error: any) {
-      console.error('任务分类失败:', error);
-      message.error('任务分类失败');
+      console.error('AI分类失败:', error);
+      message.error('AI分类失败');
     }
   };
 
-  const handlePredict = async (id: string) => {
+  const handleAIPredict = async (task: Task) => {
     try {
-      const result = await taskService.predictTaskTime(id);
-      message.success('时间预测完成');
+      const result = await aiService.predictTaskTime(task.id);
+      message.success(`AI预测完成：${result.prediction.estimatedTime}分钟，置信度：${Math.round(result.prediction.confidence * 100)}%`);
       loadTasks();
     } catch (error: any) {
-      console.error('时间预测失败:', error);
-      message.error('时间预测失败');
+      console.error('AI预测失败:', error);
+      message.error('AI预测失败');
     }
   };
+
+  const handleAIAdvice = async (task: Task) => {
+    try {
+      setAiLoading(true);
+      setSelectedTask(task);
+      const advice = await aiService.getTimeManagementAdvice({
+        taskTitle: task.title,
+        priority: task.priority,
+        estimatedTime: task.estimatedTime || 30
+      });
+      setAiAdvice(advice);
+      setAiModalVisible(true);
+    } catch (error: any) {
+      console.error('获取AI建议失败:', error);
+      message.error('获取AI建议失败');
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  // 计算统计信息
+  const totalTasks = tasks.length;
+  const completedTasks = tasks.filter(t => t.status === 'COMPLETED').length;
+  const inProgressTasks = tasks.filter(t => t.status === 'IN_PROGRESS').length;
+  const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
   return (
     <div>
-      <Card 
-        title="任务管理" 
-        extra={
-          <Space>
-            <Button 
-              onClick={() => loadTasks()} 
-              icon={<SearchOutlined />}
-            >
-              刷新
-            </Button>
-            <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
-              新建任务
-            </Button>
-          </Space>
-        }
-      >
-        <div style={{ marginBottom: '16px' }}>
-          <Search
-            placeholder="搜索任务..."
-            style={{ width: 300 }}
-            prefix={<SearchOutlined />}
+      <Row gutter={[16, 16]}>
+        <Col xs={24} sm={8}>
+          <Statistic 
+            title="总任务" 
+            value={totalTasks} 
+            prefix={<CheckCircleOutlined />} 
           />
-        </div>
-        
-        <Table
-          columns={columns}
-          dataSource={tasks}
-          rowKey="id"
-          loading={loading}
-          pagination={{
-            showSizeChanger: true,
-            showQuickJumper: true,
-            showTotal: (total) => `共 ${total} 个任务`
-          }}
-        />
-      </Card>
+        </Col>
+        <Col xs={24} sm={8}>
+          <Statistic 
+            title="已完成" 
+            value={completedTasks} 
+            prefix={<ClockCircleOutlined />} 
+          />
+        </Col>
+        <Col xs={24} sm={8}>
+          <Statistic 
+            title="完成率" 
+            value={completionRate} 
+            suffix="%" 
+            prefix={<ExclamationCircleOutlined />} 
+          />
+        </Col>
+      </Row>
 
+      <Row gutter={[16, 16]} style={{ marginTop: '16px' }}>
+        <Col xs={24} lg={16}>
+          <Card 
+            title="任务管理" 
+            extra={
+              <Space>
+                <Button 
+                  onClick={() => loadTasks()} 
+                  icon={<SearchOutlined />}
+                >
+                  刷新
+                </Button>
+                <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
+                  新建任务
+                </Button>
+              </Space>
+            }
+          >
+            <div style={{ marginBottom: '16px' }}>
+              <Search
+                placeholder="搜索任务..."
+                style={{ width: 300 }}
+                prefix={<SearchOutlined />}
+              />
+            </div>
+            
+            <Table
+              columns={columns}
+              dataSource={tasks}
+              rowKey="id"
+              loading={loading}
+              pagination={{
+                showSizeChanger: true,
+                showQuickJumper: true,
+                showTotal: (total) => `共 ${total} 个任务`,
+                pageSize: 10
+              }}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} lg={8}>
+          <TimeTracker />
+        </Col>
+      </Row>
+
+      {/* 任务编辑/创建弹窗 */}
       <Modal
         title={editingTask ? '编辑任务' : '新建任务'}
         open={modalVisible}
@@ -279,6 +371,7 @@ const Tasks: React.FC = () => {
             {editingTask ? '更新' : '创建'}
           </Button>
         ]}
+        width={600}
       >
         <Form form={form} layout="vertical">
           <Form.Item
@@ -342,6 +435,57 @@ const Tasks: React.FC = () => {
             <Input type="number" placeholder="输入实际时间" />
           </Form.Item>
         </Form>
+      </Modal>
+
+      {/* AI建议弹窗 */}
+      <Modal
+        title="AI 时间管理建议"
+        open={aiModalVisible}
+        onCancel={() => setAiModalVisible(false)}
+        footer={[
+          <Button key="close" onClick={() => setAiModalVisible(false)}>
+            关闭
+          </Button>
+        ]}
+        width={800}
+      >
+        {aiAdvice && (
+          <div>
+            <Card title="时间管理建议" size="small" style={{ marginBottom: '16px' }}>
+              <List
+                dataSource={aiAdvice.advice || []}
+                renderItem={(item: string) => (
+                  <List.Item>
+                    <CheckCircleOutlined style={{ color: '#52c41a', marginRight: '8px' }} />
+                    {item}
+                  </List.Item>
+                )}
+              />
+            </Card>
+
+            <Card title="执行建议" size="small" style={{ marginBottom: '16px' }}>
+              <List
+                dataSource={aiAdvice.suggestions || []}
+                renderItem={(item: string) => (
+                  <List.Item>
+                    <ThunderboltOutlined style={{ color: '#fa8c16', marginRight: '8px' }} />
+                    {item}
+                  </List.Item>
+                )}
+              />
+            </Card>
+
+            {aiAdvice.priority && (
+              <Card title="优先级建议" size="small">
+                <Statistic
+                  title="建议优先级"
+                  value={aiAdvice.priority === 'HIGH' ? '高' : aiAdvice.priority === 'MEDIUM' ? '中' : '低'}
+                  valueStyle={{ color: aiAdvice.priority === 'HIGH' ? '#f5222d' : aiAdvice.priority === 'MEDIUM' ? '#fa8c16' : '#52c41a' }}
+                />
+              </Card>
+            )}
+          </div>
+        )}
       </Modal>
     </div>
   );
