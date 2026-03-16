@@ -13,7 +13,7 @@ import analyticsRoutes from './routes/analytics';
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 3001;
 
 // 安全中间件
 app.use(helmet());
