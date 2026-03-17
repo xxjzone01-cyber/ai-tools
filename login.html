@@ -129,12 +129,7 @@
 
             // 自动登录
             localStorage.setItem(CURRENT_KEY, JSON.stringify(user));
-            document.getElementById('userName').textContent = name;
-            document.getElementById('loginBox').style.display = 'none';
-            document.getElementById('regBox').style.display = 'none';
-            document.getElementById('mainBox').style.display = 'block';
-            
-            alert('注册成功！');
+            window.location.href = 'admin.html';
         }
 
         function doLogin() {
@@ -146,9 +141,7 @@
 
             if (user) {
                 localStorage.setItem(CURRENT_KEY, JSON.stringify(user));
-                document.getElementById('userName').textContent = user.name;
-                document.getElementById('loginBox').style.display = 'none';
-                document.getElementById('mainBox').style.display = 'block';
+                window.location.href = 'admin.html';
             } else {
                 showMsg('loginMsg', '邮箱或密码错误', 'error');
             }
@@ -166,10 +159,7 @@
         // 检查登录状态
         const current = localStorage.getItem(CURRENT_KEY);
         if (current) {
-            const user = JSON.parse(current);
-            document.getElementById('userName').textContent = user.name;
-            document.getElementById('loginBox').style.display = 'none';
-            document.getElementById('mainBox').style.display = 'block';
+            window.location.href = 'admin.html';
         }
     </script>
 </body>
