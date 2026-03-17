@@ -34,13 +34,19 @@ jobs:
         working-directory: ./frontend
         run: ./build.sh
 
+      - name: Copy to root
+        run: |
+          cp -r frontend/build/* ./
+          # 删除不需要的文件
+          rm -rf README.md LICENSE || true
+
       - name: Setup Pages
         uses: actions/configure-pages@v3
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: './frontend/build'
+          path: '.'
 
       - name: Deploy to GitHub Pages
         id: deployment
