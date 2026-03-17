@@ -201,18 +201,19 @@ input:checked+.slider:before{transform:translateX(26px)}
 </div>
 </div>
 <script>
-var DB_KEY = 'stm_data';
+var USERS_KEY = 'stm_users';
+var DATA_KEY = 'stm_data';
 var USER_KEY = "stm_current_user";
 var SETTINGS_KEY = 'stm_settings';
 
 function getData() {
-    var s = localStorage.getItem(DB_KEY);
+    var s = localStorage.getItem(DATA_KEY);
     if (!s) return {users:[],tasks:[],records:[]};
     try { return JSON.parse(s); } 
     catch(e) { return {users:[],tasks:[],records:[]}; }
 }
 
-function saveData(data) { localStorage.setItem(DB_KEY, JSON.stringify(data)); }
+function saveData(data) { localStorage.setItem(DATA_KEY, JSON.stringify(data)); }
 function getSettings() { var s = localStorage.getItem(SETTINGS_KEY); return s ? JSON.parse(s) : {}; }
 function saveSetting(key, value) { var settings = getSettings(); settings[key] = value; localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); }
 
@@ -223,7 +224,17 @@ function toggleDarkMode(enabled) {
 }
 
 var userId = localStorage.getItem(USER_KEY);
-if (!userId) { window.location.href = 'login.html'; }
+// 验证用户是否存在于用户列表
+if (userId) {
+    try {
+        var usersStr = localStorage.getItem(USERS_KEY);
+        var users = usersStr ? JSON.parse(usersStr) : [];
+        var userExists = users.some(function(u){ return u.email.toLowerCase() === userId.toLowerCase(); });
+        if (!userExists) { window.location.href = 'login.html'; }
+    } catch(e) { window.location.href = 'login.html'; }
+} else {
+    window.location.href = 'login.html';
+}
 var timerInterval = null, timerStart = null, currentRecordId = null, currentCalDate = new Date();
 
 function showPage(page) {
