@@ -130,6 +130,48 @@
             opacity: 0.9;
             line-height: 1.6;
         }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+        
+        .feature-detail {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 3rem 2rem;
+            margin: 2rem 0;
+            border-radius: 15px;
+            color: #333;
+        }
+
+        .feature-detail h2 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: #667eea;
+        }
+
+        .feature-detail p {
+            font-size: 1.1rem;
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+
+        .feature-detail ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .feature-detail li {
+            padding: 0.5rem 0;
+            font-size: 1rem;
+        }
+
+        .feature-detail li::before {
+            content: "✓ ";
+            color: #667eea;
+            margin-right: 0.5rem;
+        }
         
         .status {
             background: rgba(255, 255, 255, 0.1);
@@ -228,30 +270,96 @@
             </div>
 
             <section id="features" class="features">
-                <div class="feature-card">
+                <a href="#ai" class="feature-card" style="text-decoration: none; color: inherit; display: block;">
                     <h3>🤖 AI智能助手</h3>
                     <p>基于人工智能的时间管理建议，帮助您优化日程安排，提高工作效率</p>
-                </div>
-                <div class="feature-card">
+                </a>
+                <a href="#analytics" class="feature-card" style="text-decoration: none; color: inherit; display: block;">
                     <h3>📊 数据分析</h3>
                     <p>详细的时间使用分析报告，让您清楚了解时间分配情况</p>
-                </div>
-                <div class="feature-card">
+                </a>
+                <a href="#reminder" class="feature-card" style="text-decoration: none; color: inherit; display: block;">
                     <h3>⏰ 智能提醒</h3>
                     <p>智能提醒功能，确保您不错过任何重要事项</p>
-                </div>
-                <div class="feature-card">
+                </a>
+                <a href="#goal" class="feature-card" style="text-decoration: none; color: inherit; display: block;">
                     <h3>🎯 目标管理</h3>
                     <p>设定和追踪您的目标，让时间管理更有方向</p>
-                </div>
-                <div class="feature-card">
+                </a>
+                <a href="#progress" class="feature-card" style="text-decoration: none; color: inherit; display: block;">
                     <h3>📈 进度追踪</h3>
                     <p>实时追踪任务进度，保持工作动力</p>
-                </div>
-                <div class="feature-card">
+                </a>
+                <a href="#sync" class="feature-card" style="text-decoration: none; color: inherit; display: block;">
                     <h3>🔄 自动同步</h3>
                     <p>多设备同步，随时随地管理您的时间</p>
-                </div>
+                </a>
+            </section>
+
+            <!-- AI智能助手 -->
+            <section id="ai" class="feature-detail">
+                <h2>🤖 AI智能助手</h2>
+                <p>基于GPT-4的智能时间管理助手，为您提供个性化建议</p>
+                <ul>
+                    <li>智能任务分类</li>
+                    <li>时间优化建议</li>
+                    <li>工作习惯分析</li>
+                </ul>
+            </section>
+
+            <!-- 数据分析 -->
+            <section id="analytics" class="feature-detail">
+                <h2>📊 数据分析</h2>
+                <p>详细的数据报表，帮助您了解时间使用情况</p>
+                <ul>
+                    <li>时间分布图表</li>
+                    <li>效率分析报告</li>
+                    <li>趋势预测</li>
+                </ul>
+            </section>
+
+            <!-- 智能提醒 -->
+            <section id="reminder" class="feature-detail">
+                <h2>⏰ 智能提醒</h2>
+                <p>基于AI分析的智能提醒系统</p>
+                <ul>
+                    <li>任务到期提醒</li>
+                    <li>时间分配提醒</li>
+                    <li>休息提醒</li>
+                </ul>
+            </section>
+
+            <!-- 目标管理 -->
+            <section id="goal" class="feature-detail">
+                <h2>🎯 目标管理</h2>
+                <p>设定和追踪您的长期目标</p>
+                <ul>
+                    <li>目标设定</li>
+                    <li>进度追踪</li>
+                    <li>完成率统计</li>
+                </ul>
+            </section>
+
+            <!-- 进度追踪 -->
+            <section id="progress" class="feature-detail">
+                <h2>📈 进度追踪</h2>
+                <p>实时追踪任务完成情况</p>
+                <ul>
+                    <li>任务进度</li>
+                    <li>完成统计</li>
+                    <li>效率评分</li>
+                </ul>
+            </section>
+
+            <!-- 自动同步 -->
+            <section id="sync" class="feature-detail">
+                <h2>🔄 自动同步</h2>
+                <p>多设备数据实时同步</p>
+                <ul>
+                    <li>手机电脑同步</li>
+                    <li>离线支持</li>
+                    <li>实时更新</li>
+                </ul>
             </section>
         </div>
     </main>
