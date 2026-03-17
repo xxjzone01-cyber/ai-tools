@@ -2,7 +2,7 @@
 # 配置智能时间管家的Cloudflare Pages部署
 
 [build]
-  command = "npm install && npm run build"
+  command = "./frontend/build.sh"
 
 [build.environment]
   NODE_VERSION = "18"
