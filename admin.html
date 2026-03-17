@@ -206,8 +206,12 @@ function toggleDarkMode(enabled) {
 }
 
 var userId = localStorage.getItem(USER_KEY);
-    try { var u = JSON.parse(userId); userId = u.id || u.email || userId; } catch(e) {}
-    try { userId = JSON.parse(userId).id; } catch(e) {}
+if (userId) {
+    try {
+        var u = JSON.parse(userId);
+        userId = u.id || u.email || userId;
+    } catch(e) {}
+}
 var timerInterval = null;
 var timerStart = null;
 var currentRecordId = null;
