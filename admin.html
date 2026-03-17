@@ -330,7 +330,7 @@ function doStopTimer() {
 
 function loadTimes() {
     var data = getData();
-    var records = (data.records || []).filter(function(r){return r.userId==userId}).reverse();
+    var records = (data.records || []).filter(function(r){return String(r.userId) === userId}).reverse();
     var list = document.getElementById('timeList');
     if (records.length === 0) { list.innerHTML = '<li class="task-item">暂无记录</li>'; return; }
     var html = '';
