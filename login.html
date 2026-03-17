@@ -70,11 +70,16 @@
 
         function getUsers() {
             const s = localStorage.getItem(STORAGE_KEY);
-            return s ? JSON.parse(s) : [];
+            if (!s) return [];
+            const data = JSON.parse(s);
+            return data.users || [];
         }
 
         function saveUsers(users) {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(users));
+            const existing = localStorage.getItem(STORAGE_KEY);
+            let data = existing ? JSON.parse(existing) : {users:[],tasks:[],records:[]};
+            data.users = users;
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
         }
 
         function showMsg(id, msg, type) {
