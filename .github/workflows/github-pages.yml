@@ -30,15 +30,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Build frontend
-        run: |
-          cd frontend
-          mkdir -p build
-          cp public/index.html build/
+      - name: Create build directory
+        run: mkdir -p build
+
+      - name: Copy index.html
+        run: cp frontend/public/index.html build/
 
       - name: Copy to root
-        run: |
-          cp -r frontend/build/* ./
+        run: cp -r build/* .
 
       - name: Setup Pages
         uses: actions/configure-pages@v3
