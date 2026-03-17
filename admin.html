@@ -13,7 +13,7 @@ body.dark .nav{background:#2a2a2a;border-bottom-color:#444}
 body.dark .nav-item{color:#aaa}
 body.dark .nav-item.active{color:#a0a0ff;border-bottom-color:#a0a0ff}
 body.dark .card{background:#2a2a2a;box-shadow:0 2px 8px rgba(0,0,0,0.3)}
-body.dark .form-group input,body.dark .form-group select,body.dark .form-group textarea{background:#333;border-color:#555;color:#eee}
+body.dark .form-group input,body.dark .form-group select{background:#333;border-color:#555;color:#eee}
 body.dark .task-item{background:#2a2a2a;border-bottom-color:#444}
 body.dark .calendar-day{background:#333;color:#eee}
 .header{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;padding:1rem;display:flex;justify-content:space-between;align-items:center}
@@ -30,6 +30,7 @@ body.dark .calendar-day{background:#333;color:#eee}
 .btn-success{background:#28a745}
 .btn-danger{background:#dc3545}
 .btn-secondary{background:#6c757d}
+.btn-ai{background:linear-gradient(135deg,#ff6b6b,#ffa500)}
 .stats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem}
 .stat-card{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;padding:1.5rem;border-radius:12px;text-align:center}
 .stat-number{font-size:2rem;font-weight:bold}
@@ -38,6 +39,9 @@ body.dark .calendar-day{background:#333;color:#eee}
 .task-btns{display:flex;gap:0.5rem}
 .btn-sm{padding:0.4rem 0.8rem;font-size:0.8rem}
 .time-display{font-size:2.5rem;text-align:center;margin:1rem 0;font-weight:bold;color:#667eea}
+.ai-tip{background:linear-gradient(135deg,#fff5e6,#ffe0b2);padding:1rem;border-radius:8px;margin-bottom:1rem;border-left:4px solid #ff9800}
+.ai-tip.dark{background:linear-gradient(135deg,#3d2a00,#5d3a00);border-left-color:#ffa500}
+.ai-badge{background:linear-gradient(135deg,#ff6b6b,#ffa500);color:#fff;padding:0.2rem 0.5rem;border-radius:12px;font-size:0.7rem;margin-left:0.5rem}
 .calendar{width:100%}
 .calendar-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem}
 .calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
@@ -59,6 +63,16 @@ body.dark .setting-item{border-bottom-color:#444}
 .slider:before{position:absolute;content:"";height:18px;width:18px;left:3px;bottom:3px;background-color:white;transition:.4s;border-radius:50%}
 input:checked+.slider{background-color:#667eea}
 input:checked+.slider:before{transform:translateX(26px)}
+.plan-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:1rem}
+.plan-card{background:#fff;border-radius:12px;padding:1.5rem;text-align:center;border:2px solid #eee}
+.plan-card.featured{border-color:#667eea;position:relative}
+.plan-card .badge{position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:#667eea;color:#fff;padding:0.3rem 1rem;border-radius:12px;font-size:0.8rem}
+.plan-name{font-size:1.5rem;font-weight:bold;margin-bottom:0.5rem}
+.plan-price{font-size:2rem;font-weight:bold;color:#667eea}
+.plan-price span{font-size:1rem;color:#666}
+.plan-features{list-style:none;margin:1rem 0;text-align:left}
+.plan-features li{padding:0.5rem 0;border-bottom:1px solid #eee}
+.plan-features li:before{content:"✓";color:#28a745;margin-right:0.5rem}
 @media (max-width:600){
 .nav-item{padding:0.75rem 1rem;font-size:0.9rem}
 .stats-grid{grid-template-columns:1fr 1fr}
@@ -76,11 +90,16 @@ input:checked+.slider:before{transform:translateX(26px)}
 <div class="nav-item" id="nav-task" onclick="showPage('task')">📝 任务</div>
 <div class="nav-item" id="nav-timer" onclick="showPage('timer')">⏱️ 计时</div>
 <div class="nav-item" id="nav-cal" onclick="showPage('cal')">📅 日历</div>
+<div class="nav-item" id="nav-ai" onclick="showPage('ai')">🤖 AI智能</div>
 <div class="nav-item" id="nav-data" onclick="showPage('data')">💾 数据</div>
 <div class="nav-item" id="nav-set" onclick="showPage('set')">⚙️ 设置</div>
 </div>
 <div class="content">
 <div id="page-dash">
+<div class="ai-tip" id="aiTip">
+<strong>💡 AI 智能建议</strong>
+<p id="aiTipText" style="margin-top:0.5rem">加载中...</p>
+</div>
 <div class="stats-grid">
 <div class="stat-card"><div class="stat-number" id="total">0</div><div>总任务</div></div>
 <div class="stat-card"><div class="stat-number" id="done">0</div><div>已完成</div></div>
@@ -90,11 +109,12 @@ input:checked+.slider:before{transform:translateX(26px)}
 </div>
 <div id="page-task" style="display:none">
 <div class="card">
-<h3>➕ 新建任务</h3>
+<h3>➕ 新建任务 <span class="ai-badge">AI辅助</span></h3>
 <div class="form-group"><input type="text" id="taskTitle" placeholder="输入任务标题"></div>
 <div class="form-group"><select id="taskPriority"><option value="LOW">低优先级</option><option value="MEDIUM" selected>中优先级</option><option value="HIGH">高优先级</option></select></div>
 <div class="form-group"><input type="date" id="taskDate"></div>
 <button class="btn" onclick="doAddTask()">创建任务</button>
+<button class="btn btn-ai" onclick="aiSuggestTask()">🤖 AI智能推荐</button>
 </div>
 <div class="card">
 <h3>📋 我的任务</h3>
@@ -125,6 +145,23 @@ input:checked+.slider:before{transform:translateX(26px)}
 </div>
 </div>
 </div>
+<div id="page-ai" style="display:none">
+<div class="card">
+<h3>🤖 AI 智能分析</h3>
+<div class="ai-tip">
+<strong>📊 智能洞察</strong>
+<div id="aiAnalysis" style="margin-top:0.5rem">分析中...</div>
+</div>
+</div>
+<div class="card">
+<h3>⏱️ 时间预测</h3>
+<div id="timePrediction" style="margin-top:1rem">基于历史数据预测...</div>
+</div>
+<div class="card">
+<h3>💡 个性化建议</h3>
+<div id="aiSuggestions" style="margin-top:1rem">生成中...</div>
+</div>
+</div>
 <div id="page-data" style="display:none">
 <div class="card">
 <h3>💾 数据管理</h3>
@@ -145,14 +182,8 @@ input:checked+.slider:before{transform:translateX(26px)}
 <h3>⚙️ 基本设置</h3>
 <div class="setting-item">
 <div style="display:flex;justify-content:space-between;align-items:center">
-<span>启用提醒通知</span>
-<label class="switch"><input type="checkbox" id="notifyEnabled" onchange="saveSetting('notify',this.checked)"><span class="slider"></span></label>
-</div>
-</div>
-<div class="setting-item">
-<div style="display:flex;justify-content:space-between;align-items:center">
-<span>自动备份数据</span>
-<label class="switch"><input type="checkbox" id="autoBackup" onchange="saveSetting('autoBackup',this.checked)"><span class="slider"></span></label>
+<span>启用AI智能建议</span>
+<label class="switch"><input type="checkbox" id="aiEnabled" onchange="saveSetting('aiEnabled',this.checked)"><span class="slider"></span></label>
 </div>
 </div>
 <div class="setting-item">
@@ -164,7 +195,7 @@ input:checked+.slider:before{transform:translateX(26px)}
 </div>
 <div class="card">
 <h3>ℹ️ 关于</h3>
-<p>智能时间管家 v1.0</p>
+<p>智能时间管家 v2.0</p>
 <p style="color:#666;font-size:0.9rem">AI驱动的智能时间管理平台</p>
 </div>
 </div>
@@ -181,63 +212,95 @@ function getData() {
     catch(e) { return {users:[],tasks:[],records:[]}; }
 }
 
-function saveData(data) {
-    localStorage.setItem(DB_KEY, JSON.stringify(data));
-}
-
-function getSettings() {
-    var s = localStorage.getItem(SETTINGS_KEY);
-    return s ? JSON.parse(s) : {};
-}
-
-function saveSetting(key, value) {
-    var settings = getSettings();
-    settings[key] = value;
-    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
-}
+function saveData(data) { localStorage.setItem(DB_KEY, JSON.stringify(data)); }
+function getSettings() { var s = localStorage.getItem(SETTINGS_KEY); return s ? JSON.parse(s) : {}; }
+function saveSetting(key, value) { var settings = getSettings(); settings[key] = value; localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); }
 
 function toggleDarkMode(enabled) {
     saveSetting('darkMode', enabled);
-    if (enabled) {
-        document.body.classList.add('dark');
-    } else {
-        document.body.classList.remove('dark');
-    }
+    document.body.classList.toggle('dark', enabled);
+    document.querySelectorAll('.ai-tip').forEach(function(el){el.classList.toggle('dark',enabled)});
 }
 
 var userId = localStorage.getItem(USER_KEY);
 if (!userId) { window.location.href = 'login.html'; }
-var timerInterval = null;
-var timerStart = null;
-var currentRecordId = null;
-var currentCalDate = new Date();
-
-if (!userId) { window.location.href = 'login.html'; }
+var timerInterval = null, timerStart = null, currentRecordId = null, currentCalDate = new Date();
 
 function showPage(page) {
     document.querySelectorAll('.nav-item').forEach(function(el){el.classList.remove('active')});
     document.getElementById('nav-'+page).classList.add('active');
-    ['dash','task','timer','cal','data','set'].forEach(function(p){
-        document.getElementById('page-'+p).style.display = 'none';
-    });
+    ['dash','task','timer','cal','ai','data','set'].forEach(function(p){document.getElementById('page-'+p).style.display='none'});
     document.getElementById('page-'+page).style.display = 'block';
-    if (page === 'dash') loadStats();
+    if (page === 'dash') { loadStats(); updateAITip(); }
     if (page === 'task') loadTasks();
     if (page === 'timer') loadTimes();
     if (page === 'cal') renderCalendar();
+    if (page === 'ai') runAIAnalysis();
     if (page === 'set') loadSettings();
 }
 
 function loadStats() {
     var data = getData();
-    var tasks = data.tasks || [];
-    var records = data.records || [];
+    var tasks = (data.tasks || []).filter(function(t){return t.userId == userId});
+    var records = (data.records || []).filter(function(r){return r.userId == userId});
     document.getElementById('total').textContent = tasks.length;
     document.getElementById('done').textContent = tasks.filter(function(t){return t.status==='COMPLETED'}).length;
     document.getElementById('doing').textContent = tasks.filter(function(t){return t.status!=='COMPLETED'}).length;
-    var totalMs = 0;
-    records.forEach(function(r){ if (r.end && r.start) totalMs += new Date(r.end) - new Date(r.start); });
+    var totalMs = 0; records.forEach(function(r){ if (r.end && r.start) totalMs += new Date(r.end) - new Date(r.start); });
     document.getElementById('hours').textContent = Math.round(totalMs/3600000*10)/10;
+}
+
+// AI 智能建议
+function updateAITip() {
+    var data = getData();
+    var tasks = (data.tasks || []).filter(function(t){return t.userId == userId});
+    var doing = tasks.filter(function(t){return t.status!=='COMPLETED'}).length;
+    var tips = [];
+    if (doing === 0) tips.push("🎉 所有任务已完成！继续保持");
+    else if (doing > 5) tips.push("📋 你有 " + doing + " 个任务在进行中，建议优先处理高优先级任务");
+    else tips.push("💪 还有 " + doing + " 个任务，加油完成！");
+    
+    var records = (data.records || []).filter(function(r){return r.userId == userId && r.end});
+    if (records.length > 0) {
+        var avgTime = records.reduce(function(sum,r){return sum+(new Date(r.end)-new Date(r.start))},0) / records.length / 60000;
+        tips.push("⏱️ 你平均每个任务用时 " + Math.round(avgTime) + " 分钟");
+    }
+    document.getElementById('aiTipText').textContent = tips.join(' | ');
+}
+
+// AI 自动分类
+function aiClassifyTask(title) {
+    var keywords = {
+        '工作': ['开会', '报告', '项目', '客户', '代码', '文档', '会议'],
+        '学习': ['学习', '读书', '课程', '考试', '培训', '练习'],
+        '健康': ['运动', '跑步', '健身', '瑜伽', '体检', '医生'],
+        '生活': ['购物', '做饭', '家务', '洗衣', '缴费', '银行'],
+        '娱乐': ['电影', '游戏', '社交', '旅游', '聚会']
+    };
+    for (var category in keywords) {
+        for (var i = 0; i < keywords[category].length; i++) {
+            if (title.indexOf(keywords[category][i]) !== -1) return category;
+        }
+    }
+    return '其他';
+}
+
+// AI 任务建议
+function aiSuggestTask() {
+    var suggestions = [
+        {title: '准备周报', priority: 'MEDIUM', category: '工作'},
+        {title: '晨跑30分钟', priority: 'HIGH', category: '健康'},
+        {title: '学习新技术', priority: 'MEDIUM', category: '学习'},
+        {title: '整理文件', priority: 'LOW', category: '工作'},
+        {title: '联系客户', priority: 'HIGH', category: '工作'},
+        {title: '健身训练', priority: 'MEDIUM', category: '健康'},
+        {title: '阅读书籍', priority: 'LOW', category: '学习'},
+        {title: '购物清单', priority: 'LOW', category: '生活'}
+    ];
+    var random = suggestions[Math.floor(Math.random() * suggestions.length)];
+    document.getElementById('taskTitle').value = random.title;
+    document.getElementById('taskPriority').value = random.priority;
+    alert('🤖 AI建议: "' + random.title + '" (分类: ' + random.category + ')');
 }
 
 function doAddTask() {
@@ -245,6 +308,8 @@ function doAddTask() {
     var priority = document.getElementById('taskPriority').value;
     var taskDate = document.getElementById('taskDate').value;
     if (!title) { alert('请输入任务标题'); return; }
+    
+    var category = aiClassifyTask(title);
     var data = getData();
     if (!data.tasks) data.tasks = [];
     data.tasks.push({
@@ -254,26 +319,27 @@ function doAddTask() {
         priority: priority,
         status: 'TODO',
         taskDate: taskDate || null,
+        category: category,
         created: new Date().toISOString()
     });
     saveData(data);
     document.getElementById('taskTitle').value = '';
     document.getElementById('taskDate').value = '';
-    loadTasks();
-    loadStats();
-    alert('任务创建成功！');
+    loadTasks(); loadStats(); updateAITip();
+    alert('任务创建成功！分类: ' + category);
 }
 
 function loadTasks() {
     var data = getData();
-    var tasks = (data.tasks || []).filter(function(t){return String(t.userId) === userId}).reverse();
+    var tasks = (data.tasks || []).filter(function(t){return t.userId == userId}).reverse();
     var list = document.getElementById('taskList');
     if (tasks.length === 0) { list.innerHTML = '<li class="task-item">暂无任务</li>'; return; }
     var html = '';
     tasks.forEach(function(t){
         var color = t.priority==='HIGH'?'red':t.priority==='MEDIUM'?'orange':'green';
+        var cat = t.category ? ' <span style="color:#666">['+t.category+']</span>' : '';
         var dateStr = t.taskDate ? ' 📅 '+t.taskDate : '';
-        html += '<li class="task-item"><div><strong>'+t.title+'</strong><span style="color:'+color+'">['+t.priority+']</span>'+dateStr+'</div><div class="task-btns"><button class="btn-sm btn-success" onclick="toggleTask('+t.id+')">'+(t.status==='COMPLETED'?'还原':'完成')+'</button><button class="btn-sm btn-danger" onclick="delTask('+t.id+')">删除</button></div></li>';
+        html += '<li class="task-item"><div><strong>'+t.title+'</strong><span style="color:'+color+'">['+t.priority+']</span>'+cat+dateStr+'</div><div class="task-btns"><button class="btn-sm btn-success" onclick="toggleTask('+t.id+')">'+(t.status==='COMPLETED'?'还原':'完成')+'</button><button class="btn-sm btn-danger" onclick="delTask('+t.id+')">删除</button></div></li>';
     });
     list.innerHTML = html;
 }
@@ -281,18 +347,17 @@ function loadTasks() {
 function toggleTask(id) {
     var data = getData();
     var task = (data.tasks || []).find(function(t){return t.id===id});
-    if (task) { task.status = task.status==='COMPLETED'?'TODO':'COMPLETED'; saveData(data); loadTasks(); loadStats(); }
+    if (task) { task.status = task.status==='COMPLETED'?'TODO':'COMPLETED'; saveData(data); loadTasks(); loadStats(); updateAITip(); }
 }
 
 function delTask(id) {
     if (!confirm('确定删除？')) return;
     var data = getData();
     data.tasks = (data.tasks || []).filter(function(t){return t.id!==id});
-    saveData(data);
-    loadTasks();
-    loadStats();
+    saveData(data); loadTasks(); loadStats(); updateAITip();
 }
 
+// 计时器
 function doStartTimer() {
     var data = getData();
     if (!data.records) data.records = [];
@@ -305,10 +370,7 @@ function doStartTimer() {
     document.getElementById('stopBtn').style.display = 'inline-block';
     timerInterval = setInterval(function(){
         var elapsed = Math.floor((Date.now()-timerStart)/1000);
-        var h = String(Math.floor(elapsed/3600)).padStart(2,'0');
-        var m = String(Math.floor((elapsed%3600)/60)).padStart(2,'0');
-        var s = String(elapsed%60).padStart(2,'0');
-        document.getElementById('timerDisplay').textContent = h+':'+m+':'+s;
+        document.getElementById('timerDisplay').textContent = String(Math.floor(elapsed/3600)).padStart(2,'0')+':'+String(Math.floor((elapsed%3600)/60)).padStart(2,'0')+':'+String(elapsed%60).padStart(2,'0');
     },1000);
 }
 
@@ -319,18 +381,16 @@ function doStopTimer() {
         if (record) { record.end = new Date().toISOString(); saveData(data); }
     }
     clearInterval(timerInterval);
-    timerStart = null;
-    currentRecordId = null;
+    timerStart = null; currentRecordId = null;
     document.getElementById('timerDisplay').textContent = '00:00:00';
     document.getElementById('startBtn').style.display = 'inline-block';
     document.getElementById('stopBtn').style.display = 'none';
-    loadTimes();
-    loadStats();
+    loadTimes(); loadStats(); updateAITip();
 }
 
 function loadTimes() {
     var data = getData();
-    var records = (data.records || []).filter(function(r){return String(r.userId) === userId}).reverse();
+    var records = (data.records || []).filter(function(r){return r.userId==userId}).reverse();
     var list = document.getElementById('timeList');
     if (records.length === 0) { list.innerHTML = '<li class="task-item">暂无记录</li>'; return; }
     var html = '';
@@ -342,22 +402,17 @@ function loadTimes() {
     list.innerHTML = html;
 }
 
+// 日历
 function renderCalendar() {
     var year = currentCalDate.getFullYear();
     var month = currentCalDate.getMonth();
     document.getElementById('calMonth').textContent = year + '年' + (month+1) + '月';
-    
     var firstDay = new Date(year, month, 1).getDay();
     var daysInMonth = new Date(year, month+1, 0).getDate();
     var data = getData();
-    var tasks = (data.tasks || []).filter(function(t){return String(t.userId) === userId && t.taskDate});
-    
+    var tasks = (data.tasks || []).filter(function(t){return t.userId == userId && t.taskDate});
     var html = ['日','一','二','三','四','五','六'].map(function(d){return '<div style="text-align:center;font-weight:bold;padding:0.5rem">'+d+'</div>'}).join('');
-    
-    for (var i=0; i<firstDay; i++) {
-        html += '<div></div>';
-    }
-    
+    for (var i=0; i<firstDay; i++) html += '<div></div>';
     var today = new Date();
     for (var d=1; d<=daysInMonth; d++) {
         var dateStr = year + '-' + String(month+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
@@ -370,40 +425,63 @@ function renderCalendar() {
     document.getElementById('calendarGrid').innerHTML = html;
 }
 
-function prevMonth() {
-    currentCalDate.setMonth(currentCalDate.getMonth()-1);
-    renderCalendar();
-}
-
-function nextMonth() {
-    currentCalDate.setMonth(currentCalDate.getMonth()+1);
-    renderCalendar();
-}
+function prevMonth() { currentCalDate.setMonth(currentCalDate.getMonth()-1); renderCalendar(); }
+function nextMonth() { currentCalDate.setMonth(currentCalDate.getMonth()+1); renderCalendar(); }
 
 function showTasksForDate(date) {
     var data = getData();
-    var tasks = (data.tasks || []).filter(function(t){return String(t.userId) === userId && t.taskDate === date});
+    var tasks = (data.tasks || []).filter(function(t){return t.userId == userId && t.taskDate === date});
     if (tasks.length === 0) { alert('这天没有任务'); return; }
-    var list = tasks.map(function(t){return t.title + ' [' + t.status + ']'}).join('\n');
-    alert(date + ' 的任务:\n' + list);
+    alert(date + ' 的任务:\n' + tasks.map(function(t){return t.title + ' [' + t.status + ']'}).join('\n'));
 }
 
+// AI 分析
+function runAIAnalysis() {
+    var data = getData();
+    var tasks = (data.tasks || []).filter(function(t){return t.userId == userId});
+    var records = (data.records || []).filter(function(r){return r.userId == userId && r.end});
+    
+    // 任务分类统计
+    var categories = {};
+    tasks.forEach(function(t){ var cat = t.category || '其他'; categories[cat] = (categories[cat] || 0) + 1; });
+    var catHtml = Object.keys(categories).map(function(cat){return cat + ': ' + categories[cat] + '个'}).join(', ');
+    document.getElementById('aiAnalysis').innerHTML = catHtml || '暂无数据';
+    
+    // 时间预测
+    if (records.length > 0) {
+        var avgTime = records.reduce(function(sum,r){return sum+(new Date(r.end)-new Date(r.start))},0) / records.length / 60000;
+        var predict = Math.round(avgTime * 1.2);
+        document.getElementById('timePrediction').innerHTML = '基于历史数据，预计你完成一个任务平均需要 <strong>' + Math.round(avgTime) + '</strong> 分钟<br>建议为类似任务预留 <strong>' + predict + '</strong> 分钟';
+    } else {
+        document.getElementById('timePrediction').innerHTML = '暂无足够数据，请先记录一些时间';
+    }
+    
+    // 个性化建议
+    var suggestions = [];
+    var doing = tasks.filter(function(t){return t.status!=='COMPLETED'}).length;
+    if (doing > 10) suggestions.push('⚠️ 任务较多，建议优先处理高优先级任务');
+    else if (doing > 0) suggestions.push('✓ 保持进度，继续加油');
+    
+    var highPriority = tasks.filter(function(t){return t.priority==='HIGH' && t.status!=='COMPLETED'}).length;
+    if (highPriority > 0) suggestions.push('🔥 你有 ' + highPriority + ' 个高优先级任务待完成');
+    
+    var completed = tasks.filter(function(t){return t.status==='COMPLETED'}).length;
+    if (completed > 0) suggestions.push('✅ 已完成 ' + completed + ' 个任务，效率不错！');
+    
+    document.getElementById('aiSuggestions').innerHTML = suggestions.join('<br>') || '暂无建议';
+}
+
+// 导入导出
 function exportData() {
     var data = getData();
     var userTasks = (data.tasks || []);
     var userRecords = (data.records || []);
-    var exportObj = {
-        tasks: userTasks,
-        records: userRecords,
-        exportDate: new Date().toISOString()
-    };
+    var exportObj = {tasks: userTasks, records: userRecords, exportDate: new Date().toISOString()};
     var blob = new Blob([JSON.stringify(exportObj, null, 2)], {type:'application/json'});
-    var url = URL.createObjectURL(blob);
     var a = document.createElement('a');
-    a.href = url;
+    a.href = URL.createObjectURL(blob);
     a.download = 'smart-time-manager-backup-' + new Date().toISOString().split('T')[0] + '.json';
     a.click();
-    URL.revokeObjectURL(url);
     alert('数据导出成功！');
 }
 
@@ -418,70 +496,38 @@ function importData(input) {
             var currentData = getData();
             if (!currentData.tasks) currentData.tasks = [];
             if (!currentData.records) currentData.records = [];
-            if (imported.tasks) {
-                imported.tasks.forEach(function(t){
-                    t.id = Date.now() + Math.random();
-                    t.userId = userId;
-                    currentData.tasks.push(t);
-                });
-            }
-            if (importedrecords) {
-                imported.records.forEach(function(r){
-                    r.id = Date.now() + Math.random();
-                    r.userId = userId;
-                    currentData.records.push(r);
-                });
-            }
-            saveData(currentData);
-            loadStats();
-            loadTasks();
-            alert('导入成功！');
-        } catch(err) {
-            alert('导入失败: ' + err.message);
-        }
+            if (imported.tasks) imported.tasks.forEach(function(t){t.id=Date.now()+Math.random();t.userId=userId;currentData.tasks.push(t);});
+            if (imported.records) imported.records.forEach(function(r){r.id=Date.now()+Math.random();r.userId=userId;currentData.records.push(r);});
+            saveData(currentData); loadStats(); loadTasks(); alert('导入成功！');
+        } catch(err) { alert('导入失败: ' + err.message); }
     };
     reader.readAsText(file);
 }
 
 function clearAllData() {
-    if (!confirm('确定清空所有数据？这个操作不可恢复！')) return;
+    if (!confirm('确定清空所有数据？')) return;
     if (!confirm('再次确认：删除所有数据？')) return;
-    var data = getData();
-    data.tasks = [];
-    data.records = [];
-    saveData(data);
-    loadStats();
-    loadTasks();
-    loadTimes();
-    alert('数据已清空');
+    var data = getData(); data.tasks = []; data.records = []; saveData(data);
+    loadStats(); loadTasks(); loadTimes(); alert('数据已清空');
 }
 
 function loadSettings() {
     var settings = getSettings();
-    document.getElementById('notifyEnabled').checked = settings.notify || false;
-    document.getElementById('autoBackup').checked = settings.autoBackup || false;
+    document.getElementById('aiEnabled').checked = settings.aiEnabled !== false;
     document.getElementById('darkMode').checked = settings.darkMode || false;
-    if (settings.darkMode) {
-        document.body.classList.add('dark');
-    }
+    if (settings.darkMode) document.body.classList.add('dark');
 }
 
 function doLogout() {
-    if (confirm('确定退出？')) { 
-        localStorage.removeItem(USER_KEY); 
-        window.location.href = 'login.html'; 
-    }
+    if (confirm('确定退出？')) { localStorage.removeItem(USER_KEY); window.location.href = 'login.html'; }
 }
 
-// 初始化深色模式
+// 初始化
 (function(){
     var settings = getSettings();
-    if (settings.darkMode) {
-        document.body.classList.add('dark');
-    }
+    if (settings.darkMode) { document.body.classList.add('dark'); document.querySelectorAll('.ai-tip').forEach(function(el){el.classList.add('dark')}); }
 })();
-
-loadStats();
+loadStats(); updateAITip();
 </script>
 </body>
 </html>
