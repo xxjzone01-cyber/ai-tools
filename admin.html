@@ -16,18 +16,49 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .content{padding:1rem}
 .card{background:#fff;border-radius:12px;padding:1.5rem;margin-bottom:1rem;box-shadow:0 2px 8px rgba(0,0,0,0.05)}
 .form-group{margin-bottom:1rem}
-.form-group input,.form-group select{width:100%;padding:0.75rem;border:1px solid #ddd;border-radius:6px;font-size:1rem;margin-bottom:0.5rem}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:0.75rem;border:1px solid #ddd;border-radius:6px;font-size:1rem;margin-bottom:0.5rem}
 .btn{background:#667eea;color:#fff;border:none;padding:0.75rem 1.5rem;border-radius:6px;cursor:pointer;font-size:1rem;width:100%;margin-bottom:0.5rem}
 .btn-success{background:#28a745}
 .btn-danger{background:#dc3545}
+.btn-secondary{background:#6c757d}
 .stats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem}
 .stat-card{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;padding:1.5rem;border-radius:12px;text-align:center}
 .stat-number{font-size:2rem;font-weight:bold}
 .task-list{list-style:none}
-.task-item{display:flex;justify-content:space-between;align-items:center;padding:1rem;border-bottom:1px solid #eee}
+.task-item{display:flex;justify-content:space-between;align-items:center;padding:1rem;border-bottom:1px solid #eee;flex-wrap:wrap;gap:0.5rem}
 .task-btns{display:flex;gap:0.5rem}
 .btn-sm{padding:0.4rem 0.8rem;font-size:0.8rem}
 .time-display{font-size:2.5rem;text-align:center;margin:1rem 0;font-weight:bold;color:#667eea}
+
+/* 日历样式 */
+.calendar{width:100%}
+.calendar-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem}
+.calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.calendar-day{aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#f8f8f8;border-radius:8px;cursor:pointer;min-height:60px}
+.calendar-day.today{background:#667eea;color:#fff}
+.calendar-day.has-task{background:#e8f5e9}
+.calendar-day-number{font-weight:bold}
+.calendar-day-tasks{font-size:0.6rem}
+
+/* 导入导出 */
+.export-box{display:flex;gap:1rem;flex-wrap:wrap}
+.export-btn{padding:1rem 2rem;flex:1;min-width:150px}
+
+/* 设置 */
+.setting-item{padding:1rem 0;border-bottom:1px solid #eee}
+.setting-item:last-child{border-bottom:none}
+.switch{position:relative;display:inline-block;width:50px;height:24px}
+.switch input{opacity:0;width:0;height:0}
+.slider{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background-color:#ccc;transition:.4s;border-radius:24px}
+.slider:before{position:absolute;content:"";height:18px;width:18px;left:3px;bottom:3px;background-color:white;transition:.4s;border-radius:50%}
+input:checked+.slider{background-color:#667eea}
+input:checked+.slider:before{transform:translateX(26px)}
+
+@media (max-width:600px){
+.nav-item{padding:0.75rem 1rem;font-size:0.9rem}
+.stats-grid{grid-template-columns:1fr 1fr}
+.card{padding:1rem}
+}
 </style>
 </head>
 <body>
@@ -39,8 +70,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div class="nav-item active" id="nav-dash" onclick="showPage('dash')">📊 仪表盘</div>
 <div class="nav-item" id="nav-task" onclick="showPage('task')">📝 任务</div>
 <div class="nav-item" id="nav-timer" onclick="showPage('timer')">⏱️ 计时</div>
+<div class="nav-item" id="nav-cal" onclick="showPage('cal')">📅 日历</div>
+<div class="nav-item" id="nav-data" onclick="showPage('data')">💾 数据</div>
+<div class="nav-item" id="nav-set" onclick="showPage('set')">⚙️ 设置</div>
 </div>
 <div class="content">
+
+<!-- 仪表盘 -->
 <div id="page-dash">
 <div class="stats-grid">
 <div class="stat-card"><div class="stat-number" id="total">0</div><div>总任务</div></div>
@@ -49,11 +85,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div class="stat-card"><div class="stat-number" id="hours">0</div><div>小时</div></div>
 </div>
 </div>
+
+<!-- 任务 -->
 <div id="page-task" style="display:none">
 <div class="card">
 <h3>➕ 新建任务</h3>
 <div class="form-group"><input type="text" id="taskTitle" placeholder="输入任务标题"></div>
 <div class="form-group"><select id="taskPriority"><option value="LOW">低优先级</option><option value="MEDIUM" selected>中优先级</option><option value="HIGH">高优先级</option></select></div>
+<div class="form-group"><input type="date" id="taskDate"></div>
 <button class="btn" onclick="doAddTask()">创建任务</button>
 </div>
 <div class="card">
@@ -61,6 +100,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <ul class="task-list" id="taskList"></ul>
 </div>
 </div>
+
+<!-- 计时 -->
 <div id="page-timer" style="display:none">
 <div class="card">
 <h3 style="text-align:center">⏱️ 计时器</h3>
@@ -73,10 +114,74 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <ul class="task-list" id="timeList"></ul>
 </div>
 </div>
+
+<!-- 日历 -->
+<div id="page-cal" style="display:none">
+<div class="card">
+<div class="calendar">
+<div class="calendar-header">
+<button class="btn btn-sm" style="width:auto" onclick="prevMonth()">◀</button>
+<h3 id="calMonth">2026年3月</h3>
+<button class="btn btn-sm" style="width:auto" onclick="nextMonth()">▶</button>
+</div>
+<div class="calendar-grid" id="calendarGrid"></div>
+</div>
+</div>
+</div>
+
+<!-- 数据导入导出 -->
+<div id="page-data" style="display:none">
+<div class="card">
+<h3>💾 数据管理</h3>
+<p style="margin-bottom:1rem;color:#666">导出您的所有数据，或从备份恢复</p>
+<div class="export-box">
+<button class="btn export-btn" onclick="exportData()">📤 导出数据</button>
+<button class="btn btn-secondary export-btn" onclick="document.getElementById('importFile').click()">📥 导入数据</button>
+<input type="file" id="importFile" style="display:none" accept=".json" onchange="importData(this)">
+</div>
+</div>
+<div class="card">
+<h3>🗑️ 数据清理</h3>
+<button class="btn btn-danger" onclick="clearAllData()">清空所有数据</button>
+</div>
+</div>
+
+<!-- 设置 -->
+<div id="page-set" style="display:none">
+<div class="card">
+<h3>⚙️ 基本设置</h3>
+<div class="setting-item">
+<div style="display:flex;justify-content:space-between;align-items:center">
+<span>启用提醒通知</span>
+<label class="switch"><input type="checkbox" id="notifyEnabled" onchange="saveSetting('notify',this.checked)"><span class="slider"></span></label>
+</div>
+</div>
+<div class="setting-item">
+<div style="display:flex;justify-content:space-between;align-items:center">
+<span>自动备份数据</span>
+<label class="switch"><input type="checkbox" id="autoBackup" onchange="saveSetting('autoBackup',this.checked)"><span class="slider"></span></label>
+</div>
+</div>
+<div class="setting-item">
+<div style="display:flex;justify-content:space-between;align-items:center">
+<span>深色模式</span>
+<label class="switch"><input type="checkbox" id="darkMode" onchange="saveSetting('darkMode',this.checked)"><span class="slider"></span></label>
+</div>
+</div>
+</div>
+<div class="card">
+<h3>ℹ️ 关于</h3>
+<p>智能时间管家 v1.0</p>
+<p style="color:#666;font-size:0.9rem">AI驱动的智能时间管理平台</p>
+</div>
+</div>
+
+</div>
 </div>
 <script>
 var DB_KEY = 'stm_data';
 var USER_KEY = 'stm_user';
+var SETTINGS_KEY = 'stm_settings';
 
 function getData() {
     var s = localStorage.getItem(DB_KEY);
@@ -89,23 +194,37 @@ function saveData(data) {
     localStorage.setItem(DB_KEY, JSON.stringify(data));
 }
 
+function getSettings() {
+    var s = localStorage.getItem(SETTINGS_KEY);
+    return s ? JSON.parse(s) : {};
+}
+
+function saveSetting(key, value) {
+    var settings = getSettings();
+    settings[key] = value;
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+}
+
 var userId = localStorage.getItem(USER_KEY);
 var timerInterval = null;
 var timerStart = null;
 var currentRecordId = null;
+var currentCalDate = new Date();
 
 if (!userId) { window.location.href = 'login.html'; }
 
 function showPage(page) {
     document.querySelectorAll('.nav-item').forEach(function(el){el.classList.remove('active')});
     document.getElementById('nav-'+page).classList.add('active');
-    document.getElementById('page-dash').style.display = 'none';
-    document.getElementById('page-task').style.display = 'none';
-    document.getElementById('page-timer').style.display = 'none';
+    ['dash','task','timer','cal','data','set'].forEach(function(p){
+        document.getElementById('page-'+p).style.display = 'none';
+    });
     document.getElementById('page-'+page).style.display = 'block';
     if (page === 'dash') loadStats();
     if (page === 'task') loadTasks();
     if (page === 'timer') loadTimes();
+    if (page === 'cal') renderCalendar();
+    if (page === 'set') loadSettings();
 }
 
 function loadStats() {
@@ -123,6 +242,7 @@ function loadStats() {
 function doAddTask() {
     var title = document.getElementById('taskTitle').value.trim();
     var priority = document.getElementById('taskPriority').value;
+    var taskDate = document.getElementById('taskDate').value;
     if (!title) { alert('请输入任务标题'); return; }
     var data = getData();
     data.tasks.push({
@@ -131,10 +251,12 @@ function doAddTask() {
         title: title,
         priority: priority,
         status: 'TODO',
+        taskDate: taskDate || null,
         created: new Date().toISOString()
     });
     saveData(data);
     document.getElementById('taskTitle').value = '';
+    document.getElementById('taskDate').value = '';
     loadTasks();
     loadStats();
     alert('任务创建成功！');
@@ -148,7 +270,8 @@ function loadTasks() {
     var html = '';
     tasks.forEach(function(t){
         var color = t.priority==='HIGH'?'red':t.priority==='MEDIUM'?'orange':'green';
-        html += '<li class="task-item"><div><strong>'+t.title+'</strong> <span style="color:'+color+'">['+t.priority+']</span></div><div class="task-btns"><button class="btn-sm btn-success" onclick="toggleTask('+t.id+')">'+(t.status==='COMPLETED'?'还原':'完成')+'</button><button class="btn-sm btn-danger" onclick="delTask('+t.id+')">删除</button></div></li>';
+        var dateStr = t.taskDate ? ' 📅 '+t.taskDate : '';
+        html += '<li class="task-item"><div><strong>'+t.title+'</strong><span style="color:'+color+'">['+t.priority+']</span>'+dateStr+'</div><div class="task-btns"><button class="btn-sm btn-success" onclick="toggleTask('+t.id+')">'+(t.status==='COMPLETED'?'还原':'完成')+'</button><button class="btn-sm btn-danger" onclick="delTask('+t.id+')">删除</button></div></li>';
     });
     list.innerHTML = html;
 }
@@ -214,6 +337,127 @@ function loadTimes() {
         html += '<li class="task-item"><div>'+start.toLocaleString()+'</div><div>'+(typeof mins==='number'?mins+'分钟':mins)+'</div></li>';
     });
     list.innerHTML = html;
+}
+
+// 日历
+function renderCalendar() {
+    var year = currentCalDate.getFullYear();
+    var month = currentCalDate.getMonth();
+    document.getElementById('calMonth').textContent = year + '年' + (month+1) + '月';
+    
+    var firstDay = new Date(year, month, 1).getDay();
+    var daysInMonth = new Date(year, month+1, 0).getDate();
+    var data = getData();
+    var tasks = data.tasks.filter(function(t){return t.userId == userId && t.taskDate});
+    
+    var html = ['日','一','二','三','四','五','六'].map(function(d){return '<div style="text-align:center;font-weight:bold;padding:0.5rem">'+d+'</div>'}).join('');
+    
+    for (var i=0; i<firstDay; i++) {
+        html += '<div></div>';
+    }
+    
+    var today = new Date();
+    for (var d=1; d<=daysInMonth; d++) {
+        var dateStr = year + '-' + String(month+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+        var hasTask = tasks.some(function(t){return t.taskDate === dateStr});
+        var isToday = today.getFullYear()===year && today.getMonth()===month && today.getDate()===d;
+        var cls = 'calendar-day' + (isToday?' today':'') + (hasTask?' has-task':'');
+        var taskCount = tasks.filter(function(t){return t.taskDate === dateStr}).length;
+        html += '<div class="'+cls+'" onclick="showTasksForDate(\''+dateStr+'\')"><div class="calendar-day-number">'+d+'</div>'+(taskCount>0?'<div class="calendar-day-tasks">'+taskCount+'任务</div>':'')+'</div>';
+    }
+    document.getElementById('calendarGrid').innerHTML = html;
+}
+
+function prevMonth() {
+    currentCalDate.setMonth(currentCalDate.getMonth()-1);
+    renderCalendar();
+}
+
+function nextMonth() {
+    currentCalDate.setMonth(currentCalDate.getMonth()+1);
+    renderCalendar();
+}
+
+function showTasksForDate(date) {
+    var data = getData();
+    var tasks = data.tasks.filter(function(t){return t.userId == userId && t.taskDate === date});
+    if (tasks.length === 0) { alert('这天没有任务'); return; }
+    var list = tasks.map(function(t){return t.title + ' [' + t.status + ']'}).join('\n');
+    alert(date + ' 的任务:\n' + list);
+}
+
+// 导入导出
+function exportData() {
+    var data = getData();
+    var userTasks = data.tasks.filter(function(t){return t.userId == userId});
+    var userRecords = data.records.filter(function(r){return r.userId == userId});
+    var exportObj = {
+        tasks: userTasks,
+        records: userRecords,
+        exportDate: new Date().toISOString()
+    };
+    var blob = new Blob([JSON.stringify(exportObj, null, 2)], {type:'application/json'});
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'smart-time-manager-backup-' + new Date().toISOString().split('T')[0] + '.json';
+    a.click();
+    URL.revokeObjectURL(url);
+    alert('数据导出成功！');
+}
+
+function importData(input) {
+    var file = input.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            var data = JSON.parse(e.target.result);
+            if (!confirm('导入将合并数据，确定继续？')) return;
+            var currentData = getData();
+            if (data.tasks) {
+                data.tasks.forEach(function(t){
+                    t.id = Date.now() + Math.random();
+                    t.userId = userId;
+                    currentData.tasks.push(t);
+                });
+            }
+            if (data.records) {
+                data.records.forEach(function(r){
+                    r.id = Date.now() + Math.random();
+                    r.userId = userId;
+                    currentData.records.push(r);
+                });
+            }
+            saveData(currentData);
+            loadStats();
+            loadTasks();
+            alert('导入成功！');
+        } catch(err) {
+            alert('导入失败: ' + err.message);
+        }
+    };
+    reader.readAsText(file);
+}
+
+function clearAllData() {
+    if (!confirm('确定清空所有数据？这个操作不可恢复！')) return;
+    if (!confirm('再次确认：删除所有数据？')) return;
+    var data = getData();
+    data.tasks = data.tasks.filter(function(t){return t.userId != userId});
+    data.records = data.records.filter(function(r){return r.userId != userId});
+    saveData(data);
+    loadStats();
+    loadTasks();
+    loadTimes();
+    alert('数据已清空');
+}
+
+function loadSettings() {
+    var settings = getSettings();
+    document.getElementById('notifyEnabled').checked = settings.notify || false;
+    document.getElementById('autoBackup').checked = settings.autoBackup || false;
+    document.getElementById('darkMode').checked = settings.darkMode || false;
 }
 
 function doLogout() {
