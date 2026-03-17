@@ -248,7 +248,7 @@
     <script>
         // 本地存储模拟数据库
         const DB = {
-            getUsers: () => JSON.parse(localStorage.getItem('users') || '[]'),
+            getUsers: () => JSON.parse(localStorage.getItem('smart_time_manager_users') || '[]'),
             saveUsers: (users) => localStorage.setItem('users', JSON.stringify(users)),
             getTasks: () => JSON.parse(localStorage.getItem('tasks') || '[]'),
             saveTasks: (tasks) => localStorage.setItem('tasks', JSON.stringify(tasks)),
@@ -257,7 +257,7 @@
         };
 
         let currentUser = null;
-        let token = localStorage.getItem('token');
+        let token = localStorage.getItem('smart_time_manager_current');
         let timerInterval = null;
         let timerStart = null;
         let currentTimeRecordId = null;
@@ -297,7 +297,7 @@
             if (user) {
                 token = user.id;
                 currentUser = user;
-                localStorage.setItem('token', token);
+                localStorage.setItem('smart_time_manager_current', token);
                 showApp();
                 loadDashboard();
             } else {
@@ -340,7 +340,7 @@
             
             token = user.id;
             currentUser = user;
-            localStorage.setItem('token', token);
+            localStorage.setItem('smart_time_manager_current', token);
             showApp();
             loadDashboard();
         }
