@@ -1,166 +1,163 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>智能时间管家 - 登录</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 20px; }
-        .box { background: white; padding: 40px; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); width: 100%; max-width: 400px; }
-        h2 { text-align: center; margin-bottom: 30px; color: #333; }
-        .form-group { margin-bottom: 20px; }
-        label { display: block; margin-bottom: 8px; color: #555; font-weight: 500; }
-        input { width: 100%; padding: 14px; border: 2px solid #eee; border-radius: 8px; font-size: 16px; }
-        input:focus { outline: none; border-color: #667eea; }
-        button { width: 100%; padding: 14px; background: #667eea; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; }
-        button:hover { background: #5568d3; }
-        p { text-align: center; margin-top: 20px; color: #666; }
-        a { color: #667eea; text-decoration: none; }
-        .msg { padding: 12px; border-radius: 6px; margin-bottom: 15px; text-align: center; }
-        .error { background: #fee; color: #c00; }
-        .success { background: #efe; color: #060; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>智能时间管家 - 登录</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:linear-gradient(135deg,#667eea,#764ba2);min-height:100vh;display:flex;justify-content:center;align-items:center;padding:1rem}
+.box{background:#fff;padding:2rem;border-radius:16px;box-shadow:0 10px 40px rgba(0,0,0,0.2);width:100%;max-width:400px}
+h2{text-align:center;color:#333;margin-bottom:1.5rem}
+input{width:100%;padding:0.8rem;margin-bottom:1rem;border:1px solid #ddd;border-radius:8px;font-size:1rem}
+button{width:100%;padding:0.8rem;background:#667eea;color:#fff;border:none;border-radius:8px;font-size:1rem;cursor:pointer;margin-bottom:0.5rem}
+button:hover{background:#5a6fd6}
+button.secondary{background:#999}
+.msg{color:red;font-size:0.9rem;margin-bottom:1rem;text-align:center;display:none}
+.link{text-align:center;margin-top:1rem}
+.link a{color:#667eea;text-decoration:none}
+</style>
 </head>
 <body>
-    <div id="loginBox" class="box">
-        <h2>🕐 智能时间管家</h2>
-        <div id="loginMsg" class="msg" style="display:none"></div>
-        <div class="form-group">
-            <label>邮箱</label>
-            <input type="email" id="email" placeholder="请输入邮箱">
-        </div>
-        <div class="form-group">
-            <label>密码</label>
-            <input type="password" id="password" placeholder="请输入密码">
-        </div>
-        <button onclick="doLogin()">登录</button>
-        <p>还没有账号？ <a href="#" onclick="showReg()">立即注册</a></p>
-    </div>
+<div class="box" id="loginBox">
+<h2>🕐 智能时间管家</h2>
+<div class="msg" id="loginMsg"></div>
+<input type="email" id="email" placeholder="邮箱">
+<input type="password" id="password" placeholder="密码">
+<button onclick="doLogin()">登录</button>
+<button class="secondary" onclick="showReg()">注册新账号</button>
+</div>
+<div class="box" id="regBox" style="display:none">
+<h2>注册</h2>
+<div class="msg" id="regMsg"></div>
+<input type="text" id="regName" placeholder="姓名">
+<input type="email" id="regEmail" placeholder="邮箱">
+<input type="password" id="regPassword" placeholder="密码（至少6位）">
+<button onclick="doReg()">注册</button>
+<button class="secondary" onclick="showLogin()">返回登录</button>
+</div>
+<script>
+const STORAGE_KEY = 'stm_users';
+const CURRENT_KEY = 'stm_current_user';
 
-    <div id="regBox" class="box" style="display:none">
-        <h2>🕐 注册账号</h2>
-        <div id="regMsg" class="msg" style="display:none"></div>
-        <div class="form-group">
-            <label>姓名</label>
-            <input type="text" id="regName" placeholder="请输入姓名">
-        </div>
-        <div class="form-group">
-            <label>邮箱</label>
-            <input type="email" id="regEmail" placeholder="请输入邮箱">
-        </div>
-        <div class="form-group">
-            <label>密码</label>
-            <input type="password" id="regPassword" placeholder="请输入密码（至少6位）">
-        </div>
-        <button onclick="doReg()">注册</button>
-        <p>已有账号？ <a href="#" onclick="showLogin()">立即登录</a></p>
-    </div>
+function getUsers() {
+    try {
+        const s = localStorage.getItem(STORAGE_KEY);
+        if (!s) return [];
+        const data = JSON.parse(s);
+        return Array.isArray(data) ? data : (data.users || []);
+    } catch(e) { return []; }
+}
 
-    <div id="mainBox" class="box" style="display:none">
-        <h2>欢迎，<span id="userName"></span>！</h2>
-        <p style="text-align:center;margin:20px 0">🎉 登录成功</p>
-        <button onclick="goApp()">进入管理后台</button>
-        <button onclick="doLogout()" style="margin-top:10px;background:#999">退出登录</button>
-    </div>
+function saveUsers(users) {
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(users));
+    } catch(e) { alert('保存失败: ' + e.message); }
+}
 
-    <script>
-        const STORAGE_KEY = 'stm_data';
-        const CURRENT_KEY = 'stm_user';
+function showMsg(id, msg, type) {
+    const el = document.getElementById(id);
+    el.textContent = msg;
+    el.style.color = type === 'error' ? 'red' : 'green';
+    el.style.display = 'block';
+}
 
-        function getUsers() {
-            const s = localStorage.getItem(STORAGE_KEY);
-            if (!s) return [];
-            const data = JSON.parse(s);
-            return data.users || [];
-        }
+function showReg() {
+    document.getElementById('loginBox').style.display = 'none';
+    document.getElementById('regBox').style.display = 'block';
+    document.getElementById('regMsg').style.display = 'none';
+}
 
-        function saveUsers(users) {
-            const existing = localStorage.getItem(STORAGE_KEY);
-            let data = existing ? JSON.parse(existing) : {users:[],tasks:[],records:[]};
-            data.users = users;
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-        }
+function showLogin() {
+    document.getElementById('loginBox').style.display = 'block';
+    document.getElementById('regBox').style.display = 'none';
+    document.getElementById('loginMsg').style.display = 'none';
+}
 
-        function showMsg(id, msg, type) {
-            const el = document.getElementById(id);
-            el.textContent = msg;
-            el.className = 'msg ' + type;
-            el.style.display = 'block';
-        }
+function doReg() {
+    const name = document.getElementById('regName').value.trim();
+    const email = document.getElementById('regEmail').value.trim().toLowerCase();
+    const password = document.getElementById('regPassword').value;
 
-        function showLogin() {
-            document.getElementById('loginBox').style.display = 'block';
-            document.getElementById('regBox').style.display = 'none';
-            document.getElementById('mainBox').style.display = 'none';
-            document.getElementById('loginMsg').style.display = 'none';
-        }
+    if (!name || !email || !password) {
+        showMsg('regMsg', '请填写所有信息', 'error');
+        return;
+    }
+    if (password.length < 6) {
+        showMsg('regMsg', '密码至少6位', 'error');
+        return;
+    }
+    if (!email.includes('@')) {
+        showMsg('regMsg', '请输入有效的邮箱地址', 'error');
+        return;
+    }
 
-        function showReg() {
-            document.getElementById('loginBox').style.display = 'none';
-            document.getElementById('regBox').style.display = 'block';
-            document.getElementById('mainBox').style.display = 'none';
-            document.getElementById('regMsg').style.display = 'none';
-        }
+    const users = getUsers();
+    const existingUser = users.find(u => u.email.toLowerCase() === email);
+    
+    if (existingUser) {
+        // 如果用户已存在，直接登录
+        localStorage.setItem(CURRENT_KEY, email);
+        window.location.href = 'admin.html';
+        return;
+    }
 
-        function doReg() {
-            const name = document.getElementById('regName').value.trim();
-            const email = document.getElementById('regEmail').value.trim();
-            const password = document.getElementById('regPassword').value;
+    const user = { 
+        id: Date.now(), 
+        name: name, 
+        email: email, 
+        password: password, 
+        created: new Date().toISOString() 
+    };
+    
+    users.push(user);
+    saveUsers(users);
 
-            if (!name || !email || !password) {
-                showMsg('regMsg', '请填写所有信息', 'error');
-                return;
-            }
-            if (password.length < 6) {
-                showMsg('regMsg', '密码至少6位', 'error');
-                return;
-            }
+    // 自动登录
+    localStorage.setItem(CURRENT_KEY, email);
+    window.location.href = 'admin.html';
+}
 
-            const users = getUsers();
-            if (users.find(u => u.email === email)) {
-                showMsg('regMsg', '该邮箱已注册', 'error');
-                return;
-            }
+function doLogin() {
+    const email = document.getElementById('email').value.trim().toLowerCase();
+    const password = document.getElementById('password').value;
 
-            const user = { id: Date.now(), name, email, password, created: new Date().toISOString() };
-            users.push(user);
-            saveUsers(users);
+    if (!email || !password) {
+        showMsg('loginMsg', '请填写邮箱和密码', 'error');
+        return;
+    }
 
-            // 自动登录
-            localStorage.setItem(CURRENT_KEY, user.email);
-            window.location.href = 'admin.html';
-        }
+    const users = getUsers();
+    const user = users.find(u => u.email.toLowerCase() === email && u.password === password);
 
-        function doLogin() {
-            const email = document.getElementById('email').value.trim();
-            const password = document.getElementById('password').value;
+    if (user) {
+        localStorage.setItem(CURRENT_KEY, user.email);
+        window.location.href = 'admin.html';
+    } else {
+        showMsg('loginMsg', '邮箱或密码错误', 'error');
+    }
+}
 
-            const users = getUsers();
-            const user = users.find(u => u.email === email && u.password === password);
+function doLogout() {
+    localStorage.removeItem(CURRENT_KEY);
+    showLogin();
+}
 
-            if (user) {
-                localStorage.setItem(CURRENT_KEY, user.email);
-                window.location.href = 'admin.html';
-            } else {
-                showMsg('loginMsg', '邮箱或密码错误', 'error');
-            }
-        }
+function goApp() {
+    window.location.href = 'admin.html';
+}
 
-        function doLogout() {
-            localStorage.removeItem(CURRENT_KEY);
-            showLogin();
-        }
-
-        function goApp() {
-            window.location.href = 'admin.html';
-        }
-
-        // 检查登录状态
-        const current = localStorage.getItem(CURRENT_KEY);
-        if (current) {
-            window.location.href = 'admin.html';
-        }
-    </script>
+// 检查登录状态 - 如果已登录直接跳转
+const current = localStorage.getItem(CURRENT_KEY);
+if (current) {
+    const users = getUsers();
+    const user = users.find(u => u.email.toLowerCase() === current.toLowerCase());
+    if (user) {
+        window.location.href = 'admin.html';
+    } else {
+        localStorage.removeItem(CURRENT_KEY);
+    }
+}
+</script>
 </body>
 </html>
