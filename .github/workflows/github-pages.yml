@@ -31,14 +31,14 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Build frontend
-        working-directory: ./frontend
-        run: ./build.sh
+        run: |
+          cd frontend
+          mkdir -p build
+          cp public/index.html build/
 
       - name: Copy to root
         run: |
           cp -r frontend/build/* ./
-          # 删除不需要的文件
-          rm -rf README.md LICENSE || true
 
       - name: Setup Pages
         uses: actions/configure-pages@v3
