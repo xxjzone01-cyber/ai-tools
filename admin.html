@@ -6,8 +6,9 @@
 <title>智能时间管家 - 管理后台</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:-apple-system,sans-serif;background:#f5f5f5}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f5}
 .header{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;padding:1rem;display:flex;justify-content:space-between;align-items:center}
+.header h1{font-size:1.2rem}
 .logout-btn{background:rgba(255,255,255,0.2);border:none;color:#fff;padding:0.5rem 1rem;border-radius:6px;cursor:pointer}
 .nav{background:#fff;display:flex;overflow-x:auto;border-bottom:1px solid #eee}
 .nav-item{padding:1rem 1.5rem;cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent}
@@ -15,7 +16,7 @@ body{font-family:-apple-system,sans-serif;background:#f5f5f5}
 .content{padding:1rem}
 .card{background:#fff;border-radius:12px;padding:1.5rem;margin-bottom:1rem;box-shadow:0 2px 8px rgba(0,0,0,0.05)}
 .form-group{margin-bottom:1rem}
-.form-group input,.form-group select{width:100%;padding:0.75rem;border:1px solid #ddd;border-radius:6px;font-size:1rem}
+.form-group input,.form-group select{width:100%;padding:0.75rem;border:1px solid #ddd;border-radius:6px;font-size:1rem;margin-bottom:0.5rem}
 .btn{background:#667eea;color:#fff;border:none;padding:0.75rem 1.5rem;border-radius:6px;cursor:pointer;font-size:1rem;width:100%;margin-bottom:0.5rem}
 .btn-success{background:#28a745}
 .btn-danger{background:#dc3545}
@@ -80,12 +81,8 @@ var USER_KEY = 'stm_user';
 function getData() {
     var s = localStorage.getItem(DB_KEY);
     if (!s) return {users:[],tasks:[],records:[]};
-    try {
-        var d = JSON.parse(s);
-        return d;
-    } catch(e) {
-        return {users:[],tasks:[],records:[]};
-    }
+    try { return JSON.parse(s); } 
+    catch(e) { return {users:[],tasks:[],records:[]}; }
 }
 
 function saveData(data) {
@@ -97,9 +94,7 @@ var timerInterval = null;
 var timerStart = null;
 var currentRecordId = null;
 
-if (!userId) {
-    window.location.href = 'login.html';
-}
+if (!userId) { window.location.href = 'login.html'; }
 
 function showPage(page) {
     document.querySelectorAll('.nav-item').forEach(function(el){el.classList.remove('active')});
@@ -121,24 +116,22 @@ function loadStats() {
     document.getElementById('done').textContent = tasks.filter(function(t){return t.status==='COMPLETED'}).length;
     document.getElementById('doing').textContent = tasks.filter(function(t){return t.status!=='COMPLETED'}).length;
     var totalMs = 0;
-    records.forEach(function(r){
-        if (r.end && r.start) totalMs += new Date(r.end) - new Date(r.start);
-    });
+    records.forEach(function(r){ if (r.end && r.start) totalMs += new Date(r.end) - new Date(r.start); });
     document.getElementById('hours').textContent = Math.round(totalMs/3600000*10)/10;
 }
 
 function doAddTask() {
     var title = document.getElementById('taskTitle').value.trim();
     var priority = document.getElementById('taskPriority').value;
-    if (!title) {alert('请输入任务标题');return;}
+    if (!title) { alert('请输入任务标题'); return; }
     var data = getData();
     data.tasks.push({
-        id:Date.now(),
-        userId:userId,
-        title:title,
-        priority:priority,
-        status:'TODO',
-        created:new Date().toISOString()
+        id: Date.now(),
+        userId: userId,
+        title: title,
+        priority: priority,
+        status: 'TODO',
+        created: new Date().toISOString()
     });
     saveData(data);
     document.getElementById('taskTitle').value = '';
@@ -151,10 +144,11 @@ function loadTasks() {
     var data = getData();
     var tasks = data.tasks.filter(function(t){return t.userId == userId}).reverse();
     var list = document.getElementById('taskList');
-    if (tasks.length === 0) {list.innerHTML = '<li class="task-item">暂无任务</li>';return;}
+    if (tasks.length === 0) { list.innerHTML = '<li class="task-item">暂无任务</li>'; return; }
     var html = '';
     tasks.forEach(function(t){
-        html += '<li class="task-item"><div><strong>'+t.title+'</strong> <span style="color:'+(t.priority==='HIGH'?'red':t.priority==='MEDIUM'?'orange':'green')+'">['+t.priority+']</span></div><div class="task-btns"><button class="btn btn-sm btn-success" onclick="toggleTask('+t.id+')">'+(t.status==='COMPLETED'?'还原':'完成')+'</button><button class="btn btn-sm btn-danger" onclick="delTask('+t.id+')">删除</button></div></li>';
+        var color = t.priority==='HIGH'?'red':t.priority==='MEDIUM'?'orange':'green';
+        html += '<li class="task-item"><div><strong>'+t.title+'</strong> <span style="color:'+color+'">['+t.priority+']</span></div><div class="task-btns"><button class="btn-sm btn-success" onclick="toggleTask('+t.id+')">'+(t.status==='COMPLETED'?'还原':'完成')+'</button><button class="btn-sm btn-danger" onclick="delTask('+t.id+')">删除</button></div></li>';
     });
     list.innerHTML = html;
 }
@@ -162,12 +156,7 @@ function loadTasks() {
 function toggleTask(id) {
     var data = getData();
     var task = data.tasks.find(function(t){return t.id===id});
-    if (task) {
-        task.status = task.status === 'COMPLETED' ? 'TODO' : 'COMPLETED';
-        saveData(data);
-        loadTasks();
-        loadStats();
-    }
+    if (task) { task.status = task.status==='COMPLETED'?'TODO':'COMPLETED'; saveData(data); loadTasks(); loadStats(); }
 }
 
 function delTask(id) {
@@ -201,7 +190,7 @@ function doStopTimer() {
     if (currentRecordId) {
         var data = getData();
         var record = data.records.find(function(r){return r.id===currentRecordId});
-        if (record) {record.end = new Date().toISOString();saveData(data);}
+        if (record) { record.end = new Date().toISOString(); saveData(data); }
     }
     clearInterval(timerInterval);
     timerStart = null;
@@ -217,7 +206,7 @@ function loadTimes() {
     var data = getData();
     var records = data.records.filter(function(r){return r.userId==userId}).reverse();
     var list = document.getElementById('timeList');
-    if (records.length === 0) {list.innerHTML = '<li class="task-item">暂无记录</li>';return;}
+    if (records.length === 0) { list.innerHTML = '<li class="task-item">暂无记录</li>'; return; }
     var html = '';
     records.slice(0,10).forEach(function(r){
         var start = new Date(r.start);
@@ -228,10 +217,7 @@ function loadTimes() {
 }
 
 function doLogout() {
-    if (confirm('确定退出？')) {
-        localStorage.removeItem(USER_KEY);
-        window.location.href = 'login.html';
-    }
+    if (confirm('确定退出？')) { localStorage.removeItem(USER_KEY); window.location.href = 'login.html'; }
 }
 
 loadStats();
