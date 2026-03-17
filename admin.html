@@ -1,318 +1,240 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>智能时间管家 - 管理后台</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f5; }
-        
-        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 1rem; display: flex; justify-content: space-between; align-items: center; }
-        .header h1 { font-size: 1.2rem; }
-        .logout-btn { background: rgba(255,255,255,0.2); border: none; color: white; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; }
-        
-        .nav { background: white; display: flex; overflow-x: auto; border-bottom: 1px solid #eee; }
-        .nav-item { padding: 1rem 1.5rem; cursor: pointer; white-space: nowrap; border-bottom: 2px solid transparent; }
-        .nav-item:hover, .nav-item.active { color: #667eea; border-bottom-color: #667eea; }
-        
-        .content { padding: 1rem; }
-        .card { background: white; border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        
-        .form-group { margin-bottom: 1rem; }
-        .form-group label { display: block; margin-bottom: 0.5rem; color: #666; }
-        .form-group input, .form-group select { width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; }
-        .btn { background: #667eea; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 6px; cursor: pointer; font-size: 1rem; }
-        
-        .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
-        .stat-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 1.5rem; border-radius: 12px; text-align: center; }
-        .stat-number { font-size: 2rem; font-weight: bold; }
-        
-        .task-list { list-style: none; }
-        .task-item { display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-bottom: 1px solid #eee; }
-        
-        .task-btns { display: flex; gap: 0.5rem; }
-        .btn-sm { padding: 0.4rem 0.8rem; font-size: 0.8rem; }
-        .btn-success { background: #28a745; }
-        .btn-danger { background: #dc3545; }
-        
-        .time-display { font-size: 2.5rem; text-align: center; margin: 1rem 0; font-weight: bold; color: #667eea; }
-        .timer-btns { text-align: center; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>智能时间管家 - 管理后台</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,sans-serif;background:#f5f5f5}
+.header{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;padding:1rem;display:flex;justify-content:space-between;align-items:center}
+.logout-btn{background:rgba(255,255,255,0.2);border:none;color:#fff;padding:0.5rem 1rem;border-radius:6px;cursor:pointer}
+.nav{background:#fff;display:flex;overflow-x:auto;border-bottom:1px solid #eee}
+.nav-item{padding:1rem 1.5rem;cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent}
+.nav-item.active{color:#667eea;border-bottom-color:#667eea}
+.content{padding:1rem}
+.card{background:#fff;border-radius:12px;padding:1.5rem;margin-bottom:1rem;box-shadow:0 2px 8px rgba(0,0,0,0.05)}
+.form-group{margin-bottom:1rem}
+.form-group input,.form-group select{width:100%;padding:0.75rem;border:1px solid #ddd;border-radius:6px;font-size:1rem}
+.btn{background:#667eea;color:#fff;border:none;padding:0.75rem 1.5rem;border-radius:6px;cursor:pointer;font-size:1rem;width:100%;margin-bottom:0.5rem}
+.btn-success{background:#28a745}
+.btn-danger{background:#dc3545}
+.stats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem}
+.stat-card{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;padding:1.5rem;border-radius:12px;text-align:center}
+.stat-number{font-size:2rem;font-weight:bold}
+.task-list{list-style:none}
+.task-item{display:flex;justify-content:space-between;align-items:center;padding:1rem;border-bottom:1px solid #eee}
+.task-btns{display:flex;gap:0.5rem}
+.btn-sm{padding:0.4rem 0.8rem;font-size:0.8rem}
+.time-display{font-size:2.5rem;text-align:center;margin:1rem 0;font-weight:bold;color:#667eea}
+</style>
 </head>
 <body>
-    <div class="header">
-        <h1>🕐 智能时间管家</h1>
-        <button class="logout-btn" onclick="logout()">退出</button>
-    </div>
-    
-    <div class="nav">
-        <div class="nav-item active" id="nav-dashboard" onclick="switchPage('dashboard')">📊 仪表盘</div>
-        <div class="nav-item" id="nav-tasks" onclick="switchPage('tasks')">📝 任务</div>
-        <div class="nav-item" id="nav-timer" onclick="switchPage('timer')">⏱️ 计时</div>
-    </div>
-    
-    <div class="content">
-        <!-- 仪表盘 -->
-        <div id="page-dashboard">
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-number" id="totalTasks">0</div>
-                    <div>总任务</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number" id="completedTasks">0</div>
-                    <div>已完成</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number" id="pendingTasks">0</div>
-                    <div>进行中</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number" id="totalHours">0</div>
-                    <div>小时</div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- 任务 -->
-        <div id="page-tasks" style="display:none">
-            <div class="card">
-                <h3 style="margin-bottom:1rem">➕ 新建任务</h3>
-                <div class="form-group">
-                    <input type="text" id="taskTitle" placeholder="任务标题">
-                </div>
-                <div class="form-group">
-                    <select id="taskPriority">
-                        <option value="LOW">低优先级</option>
-                        <option value="MEDIUM" selected>中优先级</option>
-                        <option value="HIGH">高优先级</option>
-                    </select>
-                </div>
-                <button class="btn" onclick="addTask()">创建任务</button>
-            </div>
-            
-            <div class="card">
-                <h3 style="margin-bottom:1rem">📋 我的任务</h3>
-                <ul class="task-list" id="taskList"></ul>
-            </div>
-        </div>
-        
-        <!-- 计时 -->
-        <div id="page-timer" style="display:none">
-            <div class="card">
-                <h3 style="text-align:center">⏱️ 计时器</h3>
-                <div class="time-display" id="timeDisplay">00:00:00</div>
-                <div class="timer-btns">
-                    <button class="btn" id="startBtn" onclick="startTimer()">开始计时</button>
-                    <button class="btn" id="stopBtn" onclick="stopTimer()" style="display:none;background:#dc3545">停止计时</button>
-                </div>
-            </div>
-            
-            <div class="card">
-                <h3 style="margin-bottom:1rem">📋 时间记录</h3>
-                <ul class="task-list" id="timeList"></ul>
-            </div>
-        </div>
-    </div>
-    
-    <script>
-        // 数据库
-        const DB_KEY = 'stm_data';
-        function getData() {
-            return JSON.parse(localStorage.getItem(DB_KEY) || '{"users":[],"tasks":[],"records":[]}');
-        }
-        function saveData(data) {
-            localStorage.setItem(DB_KEY, JSON.stringify(data));
-        }
-        
-        let userId = localStorage.getItem('stm_user');
-        let timerInterval = null;
-        let timerStart = null;
-        let currentRecordId = null;
-        
-        // 检查登录
-        if (!userId) {
-            window.location.href = 'login.html';
-        }
-        
-        function switchPage(page) {
-            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-            document.getElementById('nav-' + page).classList.add('active');
-            
-            document.getElementById('page-dashboard').style.display = 'none';
-            document.getElementById('page-tasks').style.display = 'none';
-            document.getElementById('page-timer').style.display = 'none';
-            
-            document.getElementById('page-' + page).style.display = 'block';
-            
-            if (page === 'dashboard') loadStats();
-            if (page === 'tasks') loadTasks();
-            if (page === 'timer') loadTimeRecords();
-        }
-        
-        function loadStats() {
-            const data = getData();
-            const tasks = data.tasks.filter(t => t.userId === userId);
-            const records = data.records.filter(r => r.userId === userId);
-            
-            document.getElementById('totalTasks').textContent = tasks.length;
-            document.getElementById('completedTasks').textContent = tasks.filter(t => t.status === 'COMPLETED').length;
-            document.getElementById('pendingTasks').textContent = tasks.filter(t => t.status !== 'COMPLETED').length;
-            
-            let totalMs = 0;
-            records.forEach(r => {
-                if (r.end && r.start) {
-                    totalMs += new Date(r.end) - new Date(r.start);
-                }
-            });
-            document.getElementById('totalHours').textContent = Math.round(totalMs / 3600000 * 10) / 10;
-        }
-        
-        function addTask() {
-            const title = document.getElementById('taskTitle').value.trim();
-            const priority = document.getElementById('taskPriority').value;
-            
-            if (!title) {
-                alert('请输入任务标题');
-                return;
-            }
-            
-            const data = getData();
-            data.tasks.push({
-                id: Date.now(),
-                userId: userId,
-                title: title,
-                priority: priority,
-                status: 'TODO',
-                created: new Date().toISOString()
-            });
-            saveData(data);
-            
-            document.getElementById('taskTitle').value = '';
-            loadTasks();
-            loadStats();
-            alert('任务创建成功！');
-        }
-        
-        function loadTasks() {
-            const data = getData();
-            const tasks = data.tasks.filter(t => t.userId === userId).reverse();
-            const list = document.getElementById('taskList');
-            
-            if (tasks.length === 0) {
-                list.innerHTML = '<li class="task-item">暂无任务</li>';
-                return;
-            }
-            
-            list.innerHTML = tasks.map(t => `
-                <li class="task-item">
-                    <div>
-                        <strong>${t.title}</strong>
-                        <span style="margin-left:0.5rem;font-size:0.8rem;color:${t.priority==='HIGH'?'red':t.priority==='MEDIUM'?'orange':'green'}">[${t.priority}]</span>
-                    </div>
-                    <div class="task-btns">
-                        <button class="btn btn-sm btn-success" onclick="toggleTask(${t.id})">${t.status==='COMPLETED'?'还原':'完成'}</button>
-                        <button class="btn btn-sm btn-danger" onclick="deleteTask(${t.id})">删除</button>
-                    </div>
-                </li>
-            `).join('');
-        }
-        
-        function toggleTask(id) {
-            const data = getData();
-            const task = data.tasks.find(t => t.id === id);
-            if (task) {
-                task.status = task.status === 'COMPLETED' ? 'TODO' : 'COMPLETED';
-                saveData(data);
-                loadTasks();
-                loadStats();
-            }
-        }
-        
-        function deleteTask(id) {
-            if (!confirm('确定删除？')) return;
-            const data = getData();
-            data.tasks = data.tasks.filter(t => t.id !== id);
-            saveData(data);
-            loadTasks();
-            loadStats();
-        }
-        
-        function startTimer() {
-            const data = getData();
-            const record = {
-                id: Date.now(),
-                userId: userId,
-                start: new Date().toISOString()
-            };
-            data.records.push(record);
-            saveData(data);
-            
-            currentRecordId = record.id;
-            timerStart = Date.now();
-            document.getElementById('startBtn').style.display = 'none';
-            document.getElementById('stopBtn').style.display = 'inline-block';
-            
-            timerInterval = setInterval(() => {
-                const elapsed = Math.floor((Date.now() - timerStart) / 1000);
-                const h = String(Math.floor(elapsed / 3600)).padStart(2, '0');
-                const m = String(Math.floor((elapsed % 3600) / 60)).padStart(2, '0');
-                const s = String(elapsed % 60).padStart(2, '0');
-                document.getElementById('timeDisplay').textContent = h + ':' + m + ':' + s;
-            }, 1000);
-        }
-        
-        function stopTimer() {
-            if (currentRecordId) {
-                const data = getData();
-                const record = data.records.find(r => r.id === currentRecordId);
-                if (record) {
-                    record.end = new Date().toISOString();
-                    saveData(data);
-                }
-            }
-            
-            clearInterval(timerInterval);
-            timerStart = null;
-            currentRecordId = null;
-            document.getElementById('timeDisplay').textContent = '00:00:00';
-            document.getElementById('startBtn').style.display = 'inline-block';
-            document.getElementById('stopBtn').style.display = 'none';
-            
-            loadTimeRecords();
-            loadStats();
-        }
-        
-        function loadTimeRecords() {
-            const data = getData();
-            const records = data.records.filter(r => r.userId === userId).reverse();
-            const list = document.getElementById('timeList');
-            
-            if (records.length === 0) {
-                list.innerHTML = '<li class="task-item">暂无记录</li>';
-                return;
-            }
-            
-            list.innerHTML = records.slice(0, 10).map(r => {
-                const start = new Date(r.start);
-                const mins = r.end ? Math.round((new Date(r.end) - new Date(r.start)) / 60000) : '进行中';
-                return `<li class="task-item">
-                    <div>${start.toLocaleString()}</div>
-                    <div>${typeof mins === 'number' ? mins + '分钟' : mins}</div>
-                </li>`;
-            }).join('');
-        }
-        
-        function logout() {
-            if (confirm('确定退出？')) {
-                localStorage.removeItem('stm_user');
-                window.location.href = 'login.html';
-            }
-        }
-        
-        // 初始化
+<div class="header">
+<h1>🕐 智能时间管家</h1>
+<button class="logout-btn" onclick="doLogout()">退出</button>
+</div>
+<div class="nav">
+<div class="nav-item active" id="nav-dash" onclick="showPage('dash')">📊 仪表盘</div>
+<div class="nav-item" id="nav-task" onclick="showPage('task')">📝 任务</div>
+<div class="nav-item" id="nav-timer" onclick="showPage('timer')">⏱️ 计时</div>
+</div>
+<div class="content">
+<div id="page-dash">
+<div class="stats-grid">
+<div class="stat-card"><div class="stat-number" id="total">0</div><div>总任务</div></div>
+<div class="stat-card"><div class="stat-number" id="done">0</div><div>已完成</div></div>
+<div class="stat-card"><div class="stat-number" id="doing">0</div><div>进行中</div></div>
+<div class="stat-card"><div class="stat-number" id="hours">0</div><div>小时</div></div>
+</div>
+</div>
+<div id="page-task" style="display:none">
+<div class="card">
+<h3>➕ 新建任务</h3>
+<div class="form-group"><input type="text" id="taskTitle" placeholder="输入任务标题"></div>
+<div class="form-group"><select id="taskPriority"><option value="LOW">低优先级</option><option value="MEDIUM" selected>中优先级</option><option value="HIGH">高优先级</option></select></div>
+<button class="btn" onclick="doAddTask()">创建任务</button>
+</div>
+<div class="card">
+<h3>📋 我的任务</h3>
+<ul class="task-list" id="taskList"></ul>
+</div>
+</div>
+<div id="page-timer" style="display:none">
+<div class="card">
+<h3 style="text-align:center">⏱️ 计时器</h3>
+<div class="time-display" id="timerDisplay">00:00:00</div>
+<button class="btn btn-success" id="startBtn" onclick="doStartTimer()">开始计时</button>
+<button class="btn btn-danger" id="stopBtn" onclick="doStopTimer()" style="display:none">停止计时</button>
+</div>
+<div class="card">
+<h3>📋 时间记录</h3>
+<ul class="task-list" id="timeList"></ul>
+</div>
+</div>
+</div>
+<script>
+var DB_KEY = 'stm_data';
+var USER_KEY = 'stm_user';
+
+function getData() {
+    var s = localStorage.getItem(DB_KEY);
+    if (!s) return {users:[],tasks:[],records:[]};
+    try {
+        var d = JSON.parse(s);
+        return d;
+    } catch(e) {
+        return {users:[],tasks:[],records:[]};
+    }
+}
+
+function saveData(data) {
+    localStorage.setItem(DB_KEY, JSON.stringify(data));
+}
+
+var userId = localStorage.getItem(USER_KEY);
+var timerInterval = null;
+var timerStart = null;
+var currentRecordId = null;
+
+if (!userId) {
+    window.location.href = 'login.html';
+}
+
+function showPage(page) {
+    document.querySelectorAll('.nav-item').forEach(function(el){el.classList.remove('active')});
+    document.getElementById('nav-'+page).classList.add('active');
+    document.getElementById('page-dash').style.display = 'none';
+    document.getElementById('page-task').style.display = 'none';
+    document.getElementById('page-timer').style.display = 'none';
+    document.getElementById('page-'+page).style.display = 'block';
+    if (page === 'dash') loadStats();
+    if (page === 'task') loadTasks();
+    if (page === 'timer') loadTimes();
+}
+
+function loadStats() {
+    var data = getData();
+    var tasks = data.tasks.filter(function(t){return t.userId == userId});
+    var records = data.records.filter(function(r){return r.userId == userId});
+    document.getElementById('total').textContent = tasks.length;
+    document.getElementById('done').textContent = tasks.filter(function(t){return t.status==='COMPLETED'}).length;
+    document.getElementById('doing').textContent = tasks.filter(function(t){return t.status!=='COMPLETED'}).length;
+    var totalMs = 0;
+    records.forEach(function(r){
+        if (r.end && r.start) totalMs += new Date(r.end) - new Date(r.start);
+    });
+    document.getElementById('hours').textContent = Math.round(totalMs/3600000*10)/10;
+}
+
+function doAddTask() {
+    var title = document.getElementById('taskTitle').value.trim();
+    var priority = document.getElementById('taskPriority').value;
+    if (!title) {alert('请输入任务标题');return;}
+    var data = getData();
+    data.tasks.push({
+        id:Date.now(),
+        userId:userId,
+        title:title,
+        priority:priority,
+        status:'TODO',
+        created:new Date().toISOString()
+    });
+    saveData(data);
+    document.getElementById('taskTitle').value = '';
+    loadTasks();
+    loadStats();
+    alert('任务创建成功！');
+}
+
+function loadTasks() {
+    var data = getData();
+    var tasks = data.tasks.filter(function(t){return t.userId == userId}).reverse();
+    var list = document.getElementById('taskList');
+    if (tasks.length === 0) {list.innerHTML = '<li class="task-item">暂无任务</li>';return;}
+    var html = '';
+    tasks.forEach(function(t){
+        html += '<li class="task-item"><div><strong>'+t.title+'</strong> <span style="color:'+(t.priority==='HIGH'?'red':t.priority==='MEDIUM'?'orange':'green')+'">['+t.priority+']</span></div><div class="task-btns"><button class="btn btn-sm btn-success" onclick="toggleTask('+t.id+')">'+(t.status==='COMPLETED'?'还原':'完成')+'</button><button class="btn btn-sm btn-danger" onclick="delTask('+t.id+')">删除</button></div></li>';
+    });
+    list.innerHTML = html;
+}
+
+function toggleTask(id) {
+    var data = getData();
+    var task = data.tasks.find(function(t){return t.id===id});
+    if (task) {
+        task.status = task.status === 'COMPLETED' ? 'TODO' : 'COMPLETED';
+        saveData(data);
+        loadTasks();
         loadStats();
-    </script>
+    }
+}
+
+function delTask(id) {
+    if (!confirm('确定删除？')) return;
+    var data = getData();
+    data.tasks = data.tasks.filter(function(t){return t.id!==id});
+    saveData(data);
+    loadTasks();
+    loadStats();
+}
+
+function doStartTimer() {
+    var data = getData();
+    var record = {id:Date.now(),userId:userId,start:new Date().toISOString()};
+    data.records.push(record);
+    saveData(data);
+    currentRecordId = record.id;
+    timerStart = Date.now();
+    document.getElementById('startBtn').style.display = 'none';
+    document.getElementById('stopBtn').style.display = 'inline-block';
+    timerInterval = setInterval(function(){
+        var elapsed = Math.floor((Date.now()-timerStart)/1000);
+        var h = String(Math.floor(elapsed/3600)).padStart(2,'0');
+        var m = String(Math.floor((elapsed%3600)/60)).padStart(2,'0');
+        var s = String(elapsed%60).padStart(2,'0');
+        document.getElementById('timerDisplay').textContent = h+':'+m+':'+s;
+    },1000);
+}
+
+function doStopTimer() {
+    if (currentRecordId) {
+        var data = getData();
+        var record = data.records.find(function(r){return r.id===currentRecordId});
+        if (record) {record.end = new Date().toISOString();saveData(data);}
+    }
+    clearInterval(timerInterval);
+    timerStart = null;
+    currentRecordId = null;
+    document.getElementById('timerDisplay').textContent = '00:00:00';
+    document.getElementById('startBtn').style.display = 'inline-block';
+    document.getElementById('stopBtn').style.display = 'none';
+    loadTimes();
+    loadStats();
+}
+
+function loadTimes() {
+    var data = getData();
+    var records = data.records.filter(function(r){return r.userId==userId}).reverse();
+    var list = document.getElementById('timeList');
+    if (records.length === 0) {list.innerHTML = '<li class="task-item">暂无记录</li>';return;}
+    var html = '';
+    records.slice(0,10).forEach(function(r){
+        var start = new Date(r.start);
+        var mins = r.end ? Math.round((new Date(r.end)-new Date(r.start))/60000) : '进行中';
+        html += '<li class="task-item"><div>'+start.toLocaleString()+'</div><div>'+(typeof mins==='number'?mins+'分钟':mins)+'</div></li>';
+    });
+    list.innerHTML = html;
+}
+
+function doLogout() {
+    if (confirm('确定退出？')) {
+        localStorage.removeItem(USER_KEY);
+        window.location.href = 'login.html';
+    }
+}
+
+loadStats();
+</script>
 </body>
 </html>
