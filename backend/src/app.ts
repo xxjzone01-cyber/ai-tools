@@ -17,7 +17,7 @@ import notificationRoutes from './routes/notifications';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 import { cacheMiddleware } from './middleware/cache';
 import { performanceMiddleware, getPerformanceStats, checkPerformanceWarnings } from './middleware/performance';
-import schedulerService from './services/schedulerService';
+// import schedulerService from './services/schedulerService';
 
 dotenv.config();
 
@@ -151,8 +151,8 @@ process.on('SIGTERM', () => {
   
   server.close(() => {
     console.log('✅ HTTP server closed');
-    schedulerService.stop();
-    console.log('✅ Scheduler stopped');
+    // schedulerService.stop();
+    // console.log('✅ Scheduler stopped');
     process.exit(0);
   });
 });
@@ -162,8 +162,8 @@ process.on('SIGINT', () => {
   
   server.close(() => {
     console.log('✅ HTTP server closed');
-    schedulerService.stop();
-    console.log('✅ Scheduler stopped');
+    // schedulerService.stop();
+    // console.log('✅ Scheduler stopped');
     process.exit(0);
   });
 });
