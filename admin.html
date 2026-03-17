@@ -6,7 +6,16 @@
 <title>智能时间管家 - 管理后台</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f5}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f5;color:#333}
+body.dark{background:#1a1a1a;color:#eee}
+body.dark .header{background:linear-gradient(135deg,#4a4a8a,#2a2a5a)}
+body.dark .nav{background:#2a2a2a;border-bottom-color:#444}
+body.dark .nav-item{color:#aaa}
+body.dark .nav-item.active{color:#a0a0ff;border-bottom-color:#a0a0ff}
+body.dark .card{background:#2a2a2a;box-shadow:0 2px 8px rgba(0,0,0,0.3)}
+body.dark .form-group input,body.dark .form-group select,body.dark .form-group textarea{background:#333;border-color:#555;color:#eee}
+body.dark .task-item{background:#2a2a2a;border-bottom-color:#444}
+body.dark .calendar-day{background:#333;color:#eee}
 .header{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;padding:1rem;display:flex;justify-content:space-between;align-items:center}
 .header h1{font-size:1.2rem}
 .logout-btn{background:rgba(255,255,255,0.2);border:none;color:#fff;padding:0.5rem 1rem;border-radius:6px;cursor:pointer}
@@ -29,23 +38,20 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .task-btns{display:flex;gap:0.5rem}
 .btn-sm{padding:0.4rem 0.8rem;font-size:0.8rem}
 .time-display{font-size:2.5rem;text-align:center;margin:1rem 0;font-weight:bold;color:#667eea}
-
-/* 日历样式 */
 .calendar{width:100%}
 .calendar-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem}
 .calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
 .calendar-day{aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#f8f8f8;border-radius:8px;cursor:pointer;min-height:60px}
+body.dark .calendar-day{background:#333}
 .calendar-day.today{background:#667eea;color:#fff}
 .calendar-day.has-task{background:#e8f5e9}
+body.dark .calendar-day.has-task{background:#1a3a1a}
 .calendar-day-number{font-weight:bold}
 .calendar-day-tasks{font-size:0.6rem}
-
-/* 导入导出 */
 .export-box{display:flex;gap:1rem;flex-wrap:wrap}
 .export-btn{padding:1rem 2rem;flex:1;min-width:150px}
-
-/* 设置 */
 .setting-item{padding:1rem 0;border-bottom:1px solid #eee}
+body.dark .setting-item{border-bottom-color:#444}
 .setting-item:last-child{border-bottom:none}
 .switch{position:relative;display:inline-block;width:50px;height:24px}
 .switch input{opacity:0;width:0;height:0}
@@ -53,8 +59,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .slider:before{position:absolute;content:"";height:18px;width:18px;left:3px;bottom:3px;background-color:white;transition:.4s;border-radius:50%}
 input:checked+.slider{background-color:#667eea}
 input:checked+.slider:before{transform:translateX(26px)}
-
-@media (max-width:600px){
+@media (max-width:600){
 .nav-item{padding:0.75rem 1rem;font-size:0.9rem}
 .stats-grid{grid-template-columns:1fr 1fr}
 .card{padding:1rem}
@@ -75,8 +80,6 @@ input:checked+.slider:before{transform:translateX(26px)}
 <div class="nav-item" id="nav-set" onclick="showPage('set')">⚙️ 设置</div>
 </div>
 <div class="content">
-
-<!-- 仪表盘 -->
 <div id="page-dash">
 <div class="stats-grid">
 <div class="stat-card"><div class="stat-number" id="total">0</div><div>总任务</div></div>
@@ -85,8 +88,6 @@ input:checked+.slider:before{transform:translateX(26px)}
 <div class="stat-card"><div class="stat-number" id="hours">0</div><div>小时</div></div>
 </div>
 </div>
-
-<!-- 任务 -->
 <div id="page-task" style="display:none">
 <div class="card">
 <h3>➕ 新建任务</h3>
@@ -100,8 +101,6 @@ input:checked+.slider:before{transform:translateX(26px)}
 <ul class="task-list" id="taskList"></ul>
 </div>
 </div>
-
-<!-- 计时 -->
 <div id="page-timer" style="display:none">
 <div class="card">
 <h3 style="text-align:center">⏱️ 计时器</h3>
@@ -114,8 +113,6 @@ input:checked+.slider:before{transform:translateX(26px)}
 <ul class="task-list" id="timeList"></ul>
 </div>
 </div>
-
-<!-- 日历 -->
 <div id="page-cal" style="display:none">
 <div class="card">
 <div class="calendar">
@@ -128,8 +125,6 @@ input:checked+.slider:before{transform:translateX(26px)}
 </div>
 </div>
 </div>
-
-<!-- 数据导入导出 -->
 <div id="page-data" style="display:none">
 <div class="card">
 <h3>💾 数据管理</h3>
@@ -145,8 +140,6 @@ input:checked+.slider:before{transform:translateX(26px)}
 <button class="btn btn-danger" onclick="clearAllData()">清空所有数据</button>
 </div>
 </div>
-
-<!-- 设置 -->
 <div id="page-set" style="display:none">
 <div class="card">
 <h3>⚙️ 基本设置</h3>
@@ -165,7 +158,7 @@ input:checked+.slider:before{transform:translateX(26px)}
 <div class="setting-item">
 <div style="display:flex;justify-content:space-between;align-items:center">
 <span>深色模式</span>
-<label class="switch"><input type="checkbox" id="darkMode" onchange="saveSetting('darkMode',this.checked)"><span class="slider"></span></label>
+<label class="switch"><input type="checkbox" id="darkMode" onchange="toggleDarkMode(this.checked)"><span class="slider"></span></label>
 </div>
 </div>
 </div>
@@ -174,8 +167,6 @@ input:checked+.slider:before{transform:translateX(26px)}
 <p>智能时间管家 v1.0</p>
 <p style="color:#666;font-size:0.9rem">AI驱动的智能时间管理平台</p>
 </div>
-</div>
-
 </div>
 </div>
 <script>
@@ -205,7 +196,18 @@ function saveSetting(key, value) {
     localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
 }
 
+function toggleDarkMode(enabled) {
+    saveSetting('darkMode', enabled);
+    if (enabled) {
+        document.body.classList.add('dark');
+    } else {
+        document.body.classList.remove('dark');
+    }
+}
+
 var userId = localStorage.getItem(USER_KEY);
+    try { var u = JSON.parse(userId); userId = u.id || u.email || userId; } catch(e) {}
+    try { userId = JSON.parse(userId).id; } catch(e) {}
 var timerInterval = null;
 var timerStart = null;
 var currentRecordId = null;
@@ -229,8 +231,8 @@ function showPage(page) {
 
 function loadStats() {
     var data = getData();
-    var tasks = data.tasks.filter(function(t){return t.userId == userId});
-    var records = data.records.filter(function(r){return r.userId == userId});
+    var tasks = data.tasks || [];
+    var records = data.records || [];
     document.getElementById('total').textContent = tasks.length;
     document.getElementById('done').textContent = tasks.filter(function(t){return t.status==='COMPLETED'}).length;
     document.getElementById('doing').textContent = tasks.filter(function(t){return t.status!=='COMPLETED'}).length;
@@ -245,6 +247,7 @@ function doAddTask() {
     var taskDate = document.getElementById('taskDate').value;
     if (!title) { alert('请输入任务标题'); return; }
     var data = getData();
+    if (!data.tasks) data.tasks = [];
     data.tasks.push({
         id: Date.now(),
         userId: userId,
@@ -264,7 +267,7 @@ function doAddTask() {
 
 function loadTasks() {
     var data = getData();
-    var tasks = data.tasks.filter(function(t){return t.userId == userId}).reverse();
+    var tasks = (data.tasks || []).filter(function(t){return t.userId == userId}).reverse();
     var list = document.getElementById('taskList');
     if (tasks.length === 0) { list.innerHTML = '<li class="task-item">暂无任务</li>'; return; }
     var html = '';
@@ -278,14 +281,14 @@ function loadTasks() {
 
 function toggleTask(id) {
     var data = getData();
-    var task = data.tasks.find(function(t){return t.id===id});
+    var task = (data.tasks || []).find(function(t){return t.id===id});
     if (task) { task.status = task.status==='COMPLETED'?'TODO':'COMPLETED'; saveData(data); loadTasks(); loadStats(); }
 }
 
 function delTask(id) {
     if (!confirm('确定删除？')) return;
     var data = getData();
-    data.tasks = data.tasks.filter(function(t){return t.id!==id});
+    data.tasks = (data.tasks || []).filter(function(t){return t.id!==id});
     saveData(data);
     loadTasks();
     loadStats();
@@ -293,6 +296,7 @@ function delTask(id) {
 
 function doStartTimer() {
     var data = getData();
+    if (!data.records) data.records = [];
     var record = {id:Date.now(),userId:userId,start:new Date().toISOString()};
     data.records.push(record);
     saveData(data);
@@ -312,7 +316,7 @@ function doStartTimer() {
 function doStopTimer() {
     if (currentRecordId) {
         var data = getData();
-        var record = data.records.find(function(r){return r.id===currentRecordId});
+        var record = (data.records || []).find(function(r){return r.id===currentRecordId});
         if (record) { record.end = new Date().toISOString(); saveData(data); }
     }
     clearInterval(timerInterval);
@@ -327,7 +331,7 @@ function doStopTimer() {
 
 function loadTimes() {
     var data = getData();
-    var records = data.records.filter(function(r){return r.userId==userId}).reverse();
+    var records = (data.records || []).filter(function(r){return r.userId==userId}).reverse();
     var list = document.getElementById('timeList');
     if (records.length === 0) { list.innerHTML = '<li class="task-item">暂无记录</li>'; return; }
     var html = '';
@@ -339,7 +343,6 @@ function loadTimes() {
     list.innerHTML = html;
 }
 
-// 日历
 function renderCalendar() {
     var year = currentCalDate.getFullYear();
     var month = currentCalDate.getMonth();
@@ -348,7 +351,7 @@ function renderCalendar() {
     var firstDay = new Date(year, month, 1).getDay();
     var daysInMonth = new Date(year, month+1, 0).getDate();
     var data = getData();
-    var tasks = data.tasks.filter(function(t){return t.userId == userId && t.taskDate});
+    var tasks = (data.tasks || []).filter(function(t){return t.userId == userId && t.taskDate});
     
     var html = ['日','一','二','三','四','五','六'].map(function(d){return '<div style="text-align:center;font-weight:bold;padding:0.5rem">'+d+'</div>'}).join('');
     
@@ -380,17 +383,16 @@ function nextMonth() {
 
 function showTasksForDate(date) {
     var data = getData();
-    var tasks = data.tasks.filter(function(t){return t.userId == userId && t.taskDate === date});
+    var tasks = (data.tasks || []).filter(function(t){return t.userId == userId && t.taskDate === date});
     if (tasks.length === 0) { alert('这天没有任务'); return; }
     var list = tasks.map(function(t){return t.title + ' [' + t.status + ']'}).join('\n');
     alert(date + ' 的任务:\n' + list);
 }
 
-// 导入导出
 function exportData() {
     var data = getData();
-    var userTasks = data.tasks.filter(function(t){return t.userId == userId});
-    var userRecords = data.records.filter(function(r){return r.userId == userId});
+    var userTasks = (data.tasks || []);
+    var userRecords = (data.records || []);
     var exportObj = {
         tasks: userTasks,
         records: userRecords,
@@ -412,18 +414,20 @@ function importData(input) {
     var reader = new FileReader();
     reader.onload = function(e) {
         try {
-            var data = JSON.parse(e.target.result);
+            var imported = JSON.parse(e.target.result);
             if (!confirm('导入将合并数据，确定继续？')) return;
             var currentData = getData();
-            if (data.tasks) {
-                data.tasks.forEach(function(t){
+            if (!currentData.tasks) currentData.tasks = [];
+            if (!currentData.records) currentData.records = [];
+            if (imported.tasks) {
+                imported.tasks.forEach(function(t){
                     t.id = Date.now() + Math.random();
                     t.userId = userId;
                     currentData.tasks.push(t);
                 });
             }
-            if (data.records) {
-                data.records.forEach(function(r){
+            if (importedrecords) {
+                imported.records.forEach(function(r){
                     r.id = Date.now() + Math.random();
                     r.userId = userId;
                     currentData.records.push(r);
@@ -444,8 +448,8 @@ function clearAllData() {
     if (!confirm('确定清空所有数据？这个操作不可恢复！')) return;
     if (!confirm('再次确认：删除所有数据？')) return;
     var data = getData();
-    data.tasks = data.tasks.filter(function(t){return t.userId != userId});
-    data.records = data.records.filter(function(r){return r.userId != userId});
+    data.tasks = [];
+    data.records = [];
     saveData(data);
     loadStats();
     loadTasks();
@@ -458,11 +462,25 @@ function loadSettings() {
     document.getElementById('notifyEnabled').checked = settings.notify || false;
     document.getElementById('autoBackup').checked = settings.autoBackup || false;
     document.getElementById('darkMode').checked = settings.darkMode || false;
+    if (settings.darkMode) {
+        document.body.classList.add('dark');
+    }
 }
 
 function doLogout() {
-    if (confirm('确定退出？')) { localStorage.removeItem(USER_KEY); window.location.href = 'login.html'; }
+    if (confirm('确定退出？')) { 
+        localStorage.removeItem(USER_KEY); 
+        window.location.href = 'login.html'; 
+    }
 }
+
+// 初始化深色模式
+(function(){
+    var settings = getSettings();
+    if (settings.darkMode) {
+        document.body.classList.add('dark');
+    }
+})();
 
 loadStats();
 </script>
