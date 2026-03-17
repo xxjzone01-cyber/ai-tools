@@ -128,7 +128,7 @@
             saveUsers(users);
 
             // 自动登录
-            localStorage.setItem(CURRENT_KEY, JSON.stringify(user));
+            localStorage.setItem(CURRENT_KEY, user.id.toString());
             window.location.href = 'admin.html';
         }
 
@@ -140,7 +140,7 @@
             const user = users.find(u => u.email === email && u.password === password);
 
             if (user) {
-                localStorage.setItem(CURRENT_KEY, JSON.stringify(user));
+                localStorage.setItem(CURRENT_KEY, user.id.toString());
                 window.location.href = 'admin.html';
             } else {
                 showMsg('loginMsg', '邮箱或密码错误', 'error');

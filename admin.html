@@ -206,12 +206,7 @@ function toggleDarkMode(enabled) {
 }
 
 var userId = localStorage.getItem(USER_KEY);
-if (userId) {
-    try {
-        var u = JSON.parse(userId);
-        userId = u.id || u.email || userId;
-    } catch(e) {}
-}
+if (!userId) { window.location.href = 'login.html'; }
 var timerInterval = null;
 var timerStart = null;
 var currentRecordId = null;
@@ -271,7 +266,7 @@ function doAddTask() {
 
 function loadTasks() {
     var data = getData();
-    var tasks = (data.tasks || []).filter(function(t){return t.userId == userId}).reverse();
+    var tasks = (data.tasks || []).filter(function(t){return String(t.userId) === userId}).reverse();
     var list = document.getElementById('taskList');
     if (tasks.length === 0) { list.innerHTML = '<li class="task-item">暂无任务</li>'; return; }
     var html = '';
@@ -355,7 +350,7 @@ function renderCalendar() {
     var firstDay = new Date(year, month, 1).getDay();
     var daysInMonth = new Date(year, month+1, 0).getDate();
     var data = getData();
-    var tasks = (data.tasks || []).filter(function(t){return t.userId == userId && t.taskDate});
+    var tasks = (data.tasks || []).filter(function(t){return String(t.userId) === userId && t.taskDate});
     
     var html = ['日','一','二','三','四','五','六'].map(function(d){return '<div style="text-align:center;font-weight:bold;padding:0.5rem">'+d+'</div>'}).join('');
     
@@ -387,7 +382,7 @@ function nextMonth() {
 
 function showTasksForDate(date) {
     var data = getData();
-    var tasks = (data.tasks || []).filter(function(t){return t.userId == userId && t.taskDate === date});
+    var tasks = (data.tasks || []).filter(function(t){return String(t.userId) === userId && t.taskDate === date});
     if (tasks.length === 0) { alert('这天没有任务'); return; }
     var list = tasks.map(function(t){return t.title + ' [' + t.status + ']'}).join('\n');
     alert(date + ' 的任务:\n' + list);
