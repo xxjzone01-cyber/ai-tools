@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>智能时间管家 - 登录</title>
+<title>智能时间管家 MVP - 登录</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:linear-gradient(135deg,#667eea,#764ba2);min-height:100vh;display:flex;justify-content:center;align-items:center;padding:1rem}
@@ -20,7 +20,7 @@ button.secondary{background:#999}
 </head>
 <body>
 <div class="box" id="loginBox">
-<h2>🕐 智能时间管家</h2>
+<h2>🕐 智能时间管家 MVP</h2>
 <div class="msg" id="loginMsg"></div>
 <input type="email" id="email" placeholder="邮箱">
 <input type="password" id="password" placeholder="密码">
@@ -96,17 +96,8 @@ function doReg() {
     const existingUser = users.find(u => u.email.toLowerCase() === email);
     
     if (existingUser) {
-        // 用户已存在，直接登录
         localStorage.setItem(CURRENT_KEY, email);
-        window.location.href = 'admin.html';
-        return;
-    }
-
-    // 以下是原本的逻辑，但实际不应该走到这里
-    // if (false) {
-        // 如果用户已存在，直接登录
-        localStorage.setItem(CURRENT_KEY, email);
-        window.location.href = 'admin.html';
+        window.location.href = 'index.html';
         return;
     }
 
@@ -121,9 +112,8 @@ function doReg() {
     users.push(user);
     saveUsers(users);
 
-    // 自动登录
     localStorage.setItem(CURRENT_KEY, email);
-    window.location.href = 'admin.html';
+    window.location.href = 'index.html';
 }
 
 function doLogin() {
@@ -140,19 +130,10 @@ function doLogin() {
 
     if (user) {
         localStorage.setItem(CURRENT_KEY, user.email);
-        window.location.href = 'admin.html';
+        window.location.href = 'index.html';
     } else {
         showMsg('loginMsg', '邮箱或密码错误', 'error');
     }
-}
-
-function doLogout() {
-    localStorage.removeItem(CURRENT_KEY);
-    showLogin();
-}
-
-function goApp() {
-    window.location.href = 'admin.html';
 }
 
 // 检查登录状态 - 如果已登录直接跳转
@@ -161,7 +142,7 @@ if (current) {
     const users = getUsers();
     const user = users.find(u => u.email.toLowerCase() === current.toLowerCase());
     if (user) {
-        window.location.href = 'admin.html';
+        window.location.href = 'index.html';
     } else {
         localStorage.removeItem(CURRENT_KEY);
     }

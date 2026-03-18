@@ -1,0 +1,27 @@
+{
+  "name": "smart-time-manager-mvp",
+  "version": "1.0.0",
+  "description": "智能时间管家 MVP - 基于纯前端的时间管理工具",
+  "main": "index.html",
+  "scripts": {
+    "start": "python3 -m http.server 8080",
+    "dev": "python3 -m http.server 8080"
+  },
+  "keywords": [
+    "time-management",
+    "task-tracker",
+    "productivity",
+    "frontend",
+    "localstorage"
+  ],
+  "author": "Smart Time Manager Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/smart-time-manager.git"
+  },
+  "homepage": "https://github.com/your-username/smart-time-manager#readme",
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}

@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>智能时间管家 - MVP版本</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f5;color:#333}
+body.dark{background:#1a1a1a;color:#eee}
+body.dark .header{background:linear-gradient(135deg,#4a4a8a,#2a2a5a)}
+body.dark .nav{background:#2a2a2a;border-bottom-color:#444}
+body.dark .nav-item{color:#aaa}
+body.dark .nav-item.active{color:#a0a0ff;border-bottom-color:#a0a0ff}
+body.dark .card{background:#2a2a2a;box-shadow:0 2px 8px rgba(0,0,0,0.3)}
+body.dark .form-group input,body.dark .form-group select{background:#333;border-color:#555;color:#eee}
+body.dark .task-item{background:#2a2a2a;border-bottom-color:#444}
+body.dark .calendar-day{background:#333;color:#eee}
+.header{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;padding:1rem;display:flex;justify-content:space-between;align-items:center}
+.header h1{font-size:1.2rem}
+.logout-btn{background:rgba(255,255,255,0.2);border:none;color:#fff;padding:0.5rem 1rem;border-radius:6px;cursor:pointer}
+.nav{background:#fff;display:flex;overflow-x:auto;border-bottom:1px solid #eee}
+.nav-item{padding:1rem 1.5rem;cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent}
+.nav-item.active{color:#667eea;border-bottom-color:#667eea}
+.content{padding:1rem}
+.card{background:#fff;border-radius:12px;padding:1.5rem;margin-bottom:1rem;box-shadow:0 2px 8px rgba(0,0,0,0.05)}
+.form-group{margin-bottom:1rem}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:0.75rem;border:1px solid #ddd;border-radius:6px;font-size:1rem;margin-bottom:0.5rem}
+.btn{background:#667eea;color:#fff;border:none;padding:0.75rem 1.5rem;border-radius:6px;cursor:pointer;font-size:1rem;width:100%;margin-bottom:0.5rem}
+.btn-success{background:#28a745}
+.btn-danger{background:#dc3545}
+.btn-secondary{background:#6c757d}
+.btn-ai{background:linear-gradient(135deg,#ff6b6b,#ffa500)}
+.stats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem}
+.stat-card{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;padding:1.5rem;border-radius:12px;text-align:center}
+.stat-number{font-size:2rem;font-weight:bold}
+.task-list{list-style:none}
+.task-item{display:flex;justify-content:space-between;align-items:center;padding:1rem;border-bottom:1px solid #eee;flex-wrap:wrap;gap:0.5rem}
+.task-btns{display:flex;gap:0.5rem}
+.btn-sm{padding:0.4rem 0.8rem;font-size:0.8rem}
+.time-display{font-size:2.5rem;text-align:center;margin:1rem 0;font-weight:bold;color:#667eea}
+.ai-tip{background:linear-gradient(135deg,#fff5e6,#ffe0b2);padding:1rem;border-radius:8px;margin-bottom:1rem;border-left:4px solid #ff9800}
+.ai-tip.dark{background:linear-gradient(135deg,#3d2a00,#5d3a00);border-left-color:#ffa500}
+.ai-badge{background:linear-gradient(135deg,#ff6b6b,#ffa500);color:#fff;padding:0.2rem 0.5rem;border-radius:12px;font-size:0.7rem;margin-left:0.5rem}
+.calendar{width:100%}
+.calendar-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem}
+.calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.calendar-day{aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#f8f8f8;border-radius:8px;cursor:pointer;min-height:60px}
+body.dark .calendar-day{background:#333}
+.calendar-day.today{background:#667eea;color:#fff}
+.calendar-day.has-task{background:#e8f5e9}
+body.dark .calendar-day.has-task{background:#1a3a1a}
+.calendar-day-number{font-weight:bold}
+.calendar-day-tasks{font-size:0.6rem}
+.export-box{display:flex;gap:1rem;flex-wrap:wrap}
+.export-btn{padding:1rem 2rem;flex:1;min-width:150px}
+.setting-item{padding:1rem 0;border-bottom:1px solid #eee}
+body.dark .setting-item{border-bottom-color:#444}
+.setting-item:last-child{border-bottom:none}
+.switch{position:relative;display:inline-block;width:50px;height:24px}
+.switch input{opacity:0;width:0;height:0}
+.slider{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background-color:#ccc;transition:.4s;border-radius:24px}
+.slider:before{position:absolute;content:"";height:18px;width:18px;left:3px;bottom:3px;background-color:white;transition:.4s;border-radius:50%}
+input:checked+.slider{background-color:#667eea}
+input:checked+.slider:before{transform:translateX(26px)}
+@media (max-width:600){
+.nav-item{padding:0.75rem 1rem;font-size:0.9rem}
+.stats-grid{grid-template-columns:1fr 1fr}
+.card{padding:1rem}
+}
+</style>
+</head>
+<body>
+<div class="header">
+<h1>🕐 智能时间管家 MVP</h1>
+<button class="logout-btn" onclick="doLogout()">退出</button>
+</div>
+<div class="nav">
+<div class="nav-item active" id="nav-dash" onclick="showPage('dash')">📊 仪表盘</div>
+<div class="nav-item" id="nav-task" onclick="showPage('task')">📝 任务</div>
+<div class="nav-item" id="nav-timer" onclick="showPage('timer')">⏱️ 计时</div>
+<div class="nav-item" id="nav-data" onclick="showPage('data')">💾 数据</div>
+<div class="nav-item" id="nav-set" onclick="showPage('set')">⚙️ 设置</div>
+</div>
+<div class="content">
+<div id="page-dash">
+<div class="ai-tip">
+<strong>💡 MVP 功能说明</strong>
+<p style="margin-top:0.5rem">欢迎使用智能时间管家MVP版本！核心功能：任务管理、时间追踪、数据导出。所有数据存储在浏览器本地。</p>
+</div>
+<div class="stats-grid">
+<div class="stat-card"><div class="stat-number" id="total">0</div><div>总任务</div></div>
+<div class="stat-card"><div class="stat-number" id="done">0</div><div>已完成</div></div>
+<div class="stat-card"><div class="stat-number" id="doing">0</div><div>进行中</div></div>
+<div class="stat-card"><div class="stat-number" id="hours">0</div><div>小时</div></div>
+</div>
+</div>
+<div id="page-task" style="display:none">
+<div class="card">
+<h3>➕ 新建任务</h3>
+<div class="form-group"><input type="text" id="taskTitle" placeholder="输入任务标题"></div>
+<div class="form-group"><select id="taskPriority"><option value="LOW">低优先级</option><option value="MEDIUM" selected>中优先级</option><option value="HIGH">高优先级</option></select></div>
+<div class="form-group"><input type="date" id="taskDate"></div>
+<button class="btn" onclick="doAddTask()">创建任务</button>
+</div>
+<div class="card">
+<h3>📋 我的任务</h3>
+<ul class="task-list" id="taskList"></ul>
+</div>
+</div>
+<div id="page-timer" style="display:none">
+<div class="card">
+<h3 style="text-align:center">⏱️ 计时器</h3>
+<div class="time-display" id="timerDisplay">00:00:00</div>
+<button class="btn btn-success" id="startBtn" onclick="doStartTimer()">开始计时</button>
+<button class="btn btn-danger" id="stopBtn" onclick="doStopTimer()" style="display:none">停止计时</button>
+</div>
+<div class="card">
+<h3>📋 时间记录</h3>
+<ul class="task-list" id="timeList"></ul>
+</div>
+</div>
+<div id="page-data" style="display:none">
+<div class="card">
+<h3>💾 数据管理</h3>
+<p style="margin-bottom:1rem;color:#666">导出您的所有数据，或从备份恢复</p>
+<div class="export-box">
+<button class="btn export-btn" onclick="exportData()">📤 导出数据</button>
+<button class="btn btn-secondary export-btn" onclick="document.getElementById('importFile').click()">📥 导入数据</button>
+<input type="file" id="importFile" style="display:none" accept=".json" onchange="importData(this)">
+</div>
+</div>
+<div class="card">
+<h3>🗑️ 数据清理</h3>
+<button class="btn btn-danger" onclick="clearAllData()">清空所有数据</button>
+</div>
+</div>
+<div id="page-set" style="display:none">
+<div class="card">
+<h3>⚙️ 基本设置</h3>
+<div class="setting-item">
+<div style="display:flex;justify-content:space-between;align-items:center">
+<span>深色模式</span>
+<label class="switch"><input type="checkbox" id="darkMode" onchange="toggleDarkMode(this.checked)"><span class="slider"></span></label>
+</div>
+</div>
+</div>
+<div class="card">
+<h3>ℹ️ 关于</h3>
+<p>智能时间管家 MVP v1.0</p>
+<p style="color:#666;font-size:0.9rem">基于纯前端的时间管理工具</p>
+</div>
+</div>
+</div>
+<script>
+const USERS_KEY = 'stm_users';
+const DATA_KEY = 'stm_data';
+const USER_KEY = "stm_current_user";
+const SETTINGS_KEY = 'stm_settings';
+
+function getData() {
+    var s = localStorage.getItem(DATA_KEY);
+    if (!s) return {users:[],tasks:[],records:[]};
+    try { return JSON.parse(s); } 
+    catch(e) { return {users:[],tasks:[],records:[]}; }
+}
+
+function saveData(data) { localStorage.setItem(DATA_KEY, JSON.stringify(data)); }
+function getSettings() { var s = localStorage.getItem(SETTINGS_KEY); return s ? JSON.parse(s) : {}; }
+function saveSetting(key, value) { var settings = getSettings(); settings[key] = value; localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); }
+
+function toggleDarkMode(enabled) {
+    saveSetting('darkMode', enabled);
+    document.body.classList.toggle('dark', enabled);
+    document.querySelectorAll('.ai-tip').forEach(function(el){el.classList.toggle('dark',enabled)});
+}
+
+var userId = localStorage.getItem(USER_KEY);
+if (!userId) {
+    window.location.href = 'login.html';
+}
+
+var timerInterval = null, timerStart = null, currentRecordId = null;
+
+function showPage(page) {
+    document.querySelectorAll('.nav-item').forEach(function(el){el.classList.remove('active')});
+    document.getElementById('nav-'+page).classList.add('active');
+    ['dash','task','timer','data','set'].forEach(function(p){document.getElementById('page-'+p).style.display='none'});
+    document.getElementById('page-'+page).style.display = 'block';
+    if (page === 'dash') { loadStats(); }
+    if (page === 'task') loadTasks();
+    if (page === 'timer') loadTimes();
+    if (page === 'set') loadSettings();
+}
+
+function loadStats() {
+    var data = getData();
+    var tasks = (data.tasks || []).filter(function(t){return t.userId == userId});
+    var records = (data.records || []).filter(function(r){return r.userId == userId});
+    document.getElementById('total').textContent = tasks.length;
+    document.getElementById('done').textContent = tasks.filter(function(t){return t.status==='COMPLETED'}).length;
+    document.getElementById('doing').textContent = tasks.filter(function(t){return t.status!=='COMPLETED'}).length;
+    var totalMs = 0; records.forEach(function(r){ if (r.end && r.start) totalMs += new Date(r.end) - new Date(r.start); });
+    document.getElementById('hours').textContent = Math.round(totalMs/3600000*10)/10;
+}
+
+function doAddTask() {
+    var title = document.getElementById('taskTitle').value.trim();
+    var priority = document.getElementById('taskPriority').value;
+    var taskDate = document.getElementById('taskDate').value;
+    if (!title) { alert('请输入任务标题'); return; }
+    
+    var data = getData();
+    if (!data.tasks) data.tasks = [];
+    data.tasks.push({
+        id: Date.now(),
+        userId: userId,
+        title: title,
+        priority: priority,
+        status: 'TODO',
+        taskDate: taskDate || null,
+        created: new Date().toISOString()
+    });
+    saveData(data);
+    document.getElementById('taskTitle').value = '';
+    document.getElementById('taskDate').value = '';
+    loadTasks(); loadStats();
+}
+
+function loadTasks() {
+    var data = getData();
+    var tasks = (data.tasks || []).filter(function(t){return t.userId == userId}).reverse();
+    var list = document.getElementById('taskList');
+    if (tasks.length === 0) { list.innerHTML = '<li class="task-item">暂无任务</li>'; return; }
+    var html = '';
+    tasks.forEach(function(t){
+        var color = t.priority==='HIGH'?'red':t.priority==='MEDIUM'?'orange':'green';
+        var dateStr = t.taskDate ? ' 📅 '+t.taskDate : '';
+        html += '<li class="task-item"><div><strong>'+t.title+'</strong><span style="color:'+color+'">['+t.priority+']</span>'+dateStr+'</div><div class="task-btns"><button class="btn-sm btn-success" onclick="toggleTask('+t.id+')">'+(t.status==='COMPLETED'?'还原':'完成')+'</button><button class="btn-sm btn-danger" onclick="delTask('+t.id+')">删除</button></div></div>';
+    });
+    list.innerHTML = html;
+}
+
+function toggleTask(id) {
+    var data = getData();
+    var task = (data.tasks || []).find(function(t){return t.id===id});
+    if (task) { task.status = task.status==='COMPLETED'?'TODO':'COMPLETED'; saveData(data); loadTasks(); loadStats(); }
+}
+
+function delTask(id) {
+    if (!confirm('确定删除？')) return;
+    var data = getData();
+    data.tasks = (data.tasks || []).filter(function(t){return t.id!==id});
+    saveData(data); loadTasks(); loadStats();
+}
+
+function doStartTimer() {
+    var data = getData();
+    if (!data.records) data.records = [];
+    var record = {id:Date.now(),userId:userId,start:new Date().toISOString()};
+    data.records.push(record);
+    saveData(data);
+    currentRecordId = record.id;
+    timerStart = Date.now();
+    document.getElementById('startBtn').style.display = 'none';
+    document.getElementById('stopBtn').style.display = 'inline-block';
+    timerInterval = setInterval(function(){
+        var elapsed = Math.floor((Date.now()-timerStart)/1000);
+        document.getElementById('timerDisplay').textContent = String(Math.floor(elapsed/3600)).padStart(2,'0')+':'+String(Math.floor((elapsed%3600)/60)).padStart(2,'0')+':'+String(elapsed%60).padStart(2,'0');
+    },1000);
+}
+
+function doStopTimer() {
+    if (currentRecordId) {
+        var data = getData();
+        var record = (data.records || []).find(function(r){return r.id===currentRecordId});
+        if (record) { record.end = new Date().toISOString(); saveData(data); }
+    }
+    clearInterval(timerInterval);
+    timerStart = null; currentRecordId = null;
+    document.getElementById('timerDisplay').textContent = '00:00:00';
+    document.getElementById('startBtn').style.display = 'inline-block';
+    document.getElementById('stopBtn').style.display = 'none';
+    loadTimes(); loadStats();
+}
+
+function loadTimes() {
+    var data = getData();
+    var records = (data.records || []).filter(function(r){return r.userId==userId}).reverse();
+    var list = document.getElementById('timeList');
+    if (records.length === 0) { list.innerHTML = '<li class="task-item">暂无记录</li>'; return; }
+    var html = '';
+    records.slice(0,10).forEach(function(r){
+        var start = new Date(r.start);
+        var mins = r.end ? Math.round((new Date(r.end)-new Date(r.start))/60000) : '进行中';
+        html += '<li class="task-item"><div>'+start.toLocaleString()+'</div><div>'+(typeof mins==='number'?mins+'分钟':mins)+'</div></li>';
+    });
+    list.innerHTML = html;
+}
+
+function exportData() {
+    var data = getData();
+    var userTasks = (data.tasks || []).filter(function(t){return t.userId == userId});
+    var userRecords = (data.records || []).filter(function(r){return r.userId == userId});
+    var exportObj = {tasks: userTasks, records: userRecords, exportDate: new Date().toISOString()};
+    var blob = new Blob([JSON.stringify(exportObj, null, 2)], {type:'application/json'});
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'smart-time-manager-mvp-backup-' + new Date().toISOString().split('T')[0] + '.json';
+    a.click();
+    alert('数据导出成功！');
+}
+
+function importData(input) {
+    var file = input.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            var imported = JSON.parse(e.target.result);
+            if (!confirm('导入将合并数据，确定继续？')) return;
+            var currentData = getData();
+            if (!currentData.tasks) currentData.tasks = [];
+            if (!currentData.records) currentData.records = [];
+            if (imported.tasks) imported.tasks.forEach(function(t){t.id=Date.now()+Math.random();t.userId=userId;currentData.tasks.push(t);});
+            if (imported.records) imported.records.forEach(function(r){r.id=Date.now()+Math.random();r.userId=userId;currentData.records.push(r);});
+            saveData(currentData); loadStats(); loadTasks(); alert('导入成功！');
+        } catch(err) { alert('导入失败: ' + err.message); }
+    };
+    reader.readAsText(file);
+}
+
+function clearAllData() {
+    if (!confirm('确定清空所有数据？')) return;
+    if (!confirm('再次确认：删除所有数据？')) return;
+    var data = getData(); data.tasks = []; data.records = []; saveData(data);
+    loadStats(); loadTasks(); loadTimes(); alert('数据已清空');
+}
+
+function loadSettings() {
+    var settings = getSettings();
+    document.getElementById('darkMode').checked = settings.darkMode || false;
+    if (settings.darkMode) document.body.classList.add('dark');
+}
+
+function doLogout() {
+    if (confirm('确定退出？')) { localStorage.removeItem(USER_KEY); window.location.href = 'login.html'; }
+}
+
+// 初始化
+(function(){
+    var settings = getSettings();
+    if (settings.darkMode) { document.body.classList.add('dark'); }
+})();
+loadStats();
+</script>
+</body>
+</html>
