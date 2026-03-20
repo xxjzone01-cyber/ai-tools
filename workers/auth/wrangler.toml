@@ -5,4 +5,4 @@ compatibility_date = "2024-01-01"
 [[d1_databases]]
 binding = "DB"
 database_name = "smart-time-manager-users"
-database_id = "YOUR_DATABASE_ID"  # 创建 D1 数据库后替换
+database_id = "88a76946-94d0-4508-a91f-9dc9adf962a9"

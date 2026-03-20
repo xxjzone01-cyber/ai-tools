@@ -1,9 +1,12 @@
 // Cloudflare Worker - 用户认证 API
 const DB = require('./db');
 
-const GOOGLE_CLIENT_ID = 'YOUR_GOOGLE_CLIENT_ID'; // 需要替换
-const GOOGLE_CLIENT_SECRET = 'YOUR_GOOGLE_CLIENT_SECRET'; // 需要替换
-const REDIRECT_URI = 'https://your-domain.com/auth/callback';
+// TODO: 部署时在 Cloudflare Worker secrets 设置
+// wrangler secret put GOOGLE_CLIENT_ID
+// wrangler secret put GOOGLE_CLIENT_SECRET
+const GOOGLE_CLIENT_ID = 'YOUR_GOOGLE_CLIENT_ID';
+const GOOGLE_CLIENT_SECRET = 'YOUR_GOOGLE_CLIENT_SECRET';
+const REDIRECT_URI = 'https://smart-time-manager-auth.xxjzone01.workers.dev/auth/callback';
 
 export default {
   async fetch(request, env) {
