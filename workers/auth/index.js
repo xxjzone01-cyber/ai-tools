@@ -1,15 +1,18 @@
 // Cloudflare Worker - 用户认证 API
 const DB = require('./db');
 
-// TODO: 部署时在 Cloudflare Worker secrets 设置
-// wrangler secret put GOOGLE_CLIENT_ID
-// wrangler secret put GOOGLE_CLIENT_SECRET
+// 从环境变量读取 Google OAuth 配置（已在 Cloudflare Worker secrets 中设置）
 const GOOGLE_CLIENT_ID = 'YOUR_GOOGLE_CLIENT_ID';
 const GOOGLE_CLIENT_SECRET = 'YOUR_GOOGLE_CLIENT_SECRET';
 const REDIRECT_URI = 'https://smart-time-manager-auth.xxjzone01.workers.dev/auth/callback';
 
 export default {
   async fetch(request, env) {
+    // 使用 env 中的 secrets
+    const clientId = env.GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID;
+    const clientSecret = env.GOOGLE_CLIENT_SECRET || GOOGLE_CLIENT_SECRET;
+    const redirectUri = env.GOOGLE_REDIRECT_URI || REDIRECT_URI;
+    
     const url = new URL(request.url);
     const path = url.pathname;
 
@@ -83,10 +86,10 @@ export default {
           method: 'POST',
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
           body: new URLSearchParams({
-            client_id: GOOGLE_CLIENT_ID,
-            client_secret: GOOGLE_CLIENT_SECRET,
+            client_id: clientId,
+            client_secret: clientSecret,
             code,
-            redirect_uri: REDIRECT_URI,
+            redirect_uri: redirectUri,
             grant_type: 'authorization_code',
           }),
         });
@@ -126,8 +129,8 @@ export default {
       // Google 登录入口
       if (path === '/auth/google' && request.method === 'GET') {
         const authUrl = 'https://accounts.google.com/o/oauth2/v2/auth?' + new URLSearchParams({
-          client_id: GOOGLE_CLIENT_ID,
-          redirect_uri: REDIRECT_URI,
+          client_id: clientId,
+          redirect_uri: redirectUri,
           response_type: 'code',
           scope: 'email profile',
           access_type: 'offline',
