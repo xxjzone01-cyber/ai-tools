@@ -6,6 +6,7 @@ on:
       - master
     paths:
       - 'frontend/**'
+      - '*.html'
       - '.github/workflows/pages.yml'
   pull_request:
     branches:
@@ -24,8 +25,11 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Build frontend
-        working-directory: ./frontend
-        run: ./build.sh
+        run: |
+          mkdir -p build
+          cp *.html build/
+          cp admin.html build/ 2>/dev/null || true
+          cp -r frontend/build/* build/ 2>/dev/null || true
 
       - name: Setup Pages
         uses: actions/configure-pages@v3
@@ -33,7 +37,7 @@ jobs:
       - name: Upload frontend build
         uses: actions/upload-pages-artifact@v2
         with:
-          path: './frontend/build'
+          path: './build'
 
       - name: Deploy to Cloudflare Pages
         id: deployment
