@@ -2,6 +2,9 @@ name = "smart-time-manager-auth"
 main = "index.js"
 compatibility_date = "2024-01-01"
 
+[vars]
+FRONTEND_URL = "https://08106499.smart-time-manager.pages.dev"
+
 [[d1_databases]]
 binding = "DB"
 database_name = "smart-time-manager-users"

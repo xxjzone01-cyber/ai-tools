@@ -18,7 +18,9 @@ body.dark .task-item{background:#2a2a2a;border-bottom-color:#444}
 body.dark .calendar-day{background:#333;color:#eee}
 .header{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;padding:1rem;display:flex;justify-content:space-between;align-items:center}
 .header h1{font-size:1.2rem}
-.logout-btn{background:rgba(255,255,255,0.2);border:none;color:#fff;padding:0.5rem 1rem;border-radius:6px;cursor:pointer}
+.header-right{display:flex;align-items:center;gap:0.5rem}
+.avatar{width:32px;height:32px;border-radius:50%;background:#fff;color:#667eea;display:flex;align-items:center;justify-content:center;font-weight:bold}
+.logout-btn,.profile-btn{background:rgba(255,255,255,0.2);border:none;color:#fff;padding:0.5rem 1rem;border-radius:6px;cursor:pointer}
 .nav{background:#fff;display:flex;overflow-x:auto;border-bottom:1px solid #eee}
 .nav-item{padding:1rem 1.5rem;cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent}
 .nav-item.active{color:#667eea;border-bottom-color:#667eea}
@@ -63,6 +65,7 @@ body.dark .setting-item{border-bottom-color:#444}
 .slider:before{position:absolute;content:"";height:18px;width:18px;left:3px;bottom:3px;background-color:white;transition:.4s;border-radius:50%}
 input:checked+.slider{background-color:#667eea}
 input:checked+.slider:before{transform:translateX(26px)}
+.loading{text-align:center;padding:2rem;color:#999}
 @media (max-width:600){
 .nav-item{padding:0.75rem 1rem;font-size:0.9rem}
 .stats-grid{grid-template-columns:1fr 1fr}
@@ -72,8 +75,13 @@ input:checked+.slider:before{transform:translateX(26px)}
 </head>
 <body>
 <div class="header">
-<h1>🕐 智能时间管家 MVP</h1>
+<h1>🕐 智能时间管家</h1>
+<div class="header-right">
+<span id="userName"></span>
+<div class="avatar" id="userAvatar">?</div>
+<button class="profile-btn" onclick="showPage('profile')">👤</button>
 <button class="logout-btn" onclick="doLogout()">退出</button>
+</div>
 </div>
 <div class="nav">
 <div class="nav-item active" id="nav-dash" onclick="showPage('dash')">📊 仪表盘</div>
@@ -86,7 +94,7 @@ input:checked+.slider:before{transform:translateX(26px)}
 <div id="page-dash">
 <div class="ai-tip">
 <strong>💡 MVP 功能说明</strong>
-<p style="margin-top:0.5rem">欢迎使用智能时间管家MVP版本！核心功能：任务管理、时间追踪、数据导出。所有数据存储在浏览器本地。</p>
+<p style="margin-top:0.5rem">欢迎使用智能时间管家！核心功能：任务管理、时间追踪、数据导出。数据已同步到云端。</p>
 </div>
 <div class="stats-grid">
 <div class="stat-card"><div class="stat-number" id="total">0</div><div>总任务</div></div>
@@ -98,13 +106,19 @@ input:checked+.slider:before{transform:translateX(26px)}
 <div id="page-task" style="display:none">
 <div class="card">
 <h3>➕ 新建任务</h3>
-<div class="form-group"><input type="text" id="taskTitle" placeholder="输入任务标题"></div>
-<div class="form-group"><select id="taskPriority"><option value="LOW">低优先级</option><option value="MEDIUM" selected>中优先级</option><option value="HIGH">高优先级</option></select></div>
-<div class="form-group"><input type="date" id="taskDate"></div>
-<button class="btn" onclick="doAddTask()">创建任务</button>
+<div class="form-group">
+<input type="text" id="taskTitle" placeholder="任务标题">
+<select id="taskPriority">
+<option value="LOW">优先级：低</option>
+<option value="MEDIUM">优先级：中</option>
+<option value="HIGH">优先级：高</option>
+</select>
+<input type="date" id="taskDate">
+<button class="btn" onclick="doAddTask()">添加任务</button>
+</div>
 </div>
 <div class="card">
-<h3>📋 我的任务</h3>
+<h3>📋 任务列表</h3>
 <ul class="task-list" id="taskList"></ul>
 </div>
 </div>
@@ -112,8 +126,10 @@ input:checked+.slider:before{transform:translateX(26px)}
 <div class="card">
 <h3 style="text-align:center">⏱️ 计时器</h3>
 <div class="time-display" id="timerDisplay">00:00:00</div>
+<div style="display:flex;gap:1rem;justify-content:center">
 <button class="btn btn-success" id="startBtn" onclick="doStartTimer()">开始计时</button>
 <button class="btn btn-danger" id="stopBtn" onclick="doStopTimer()" style="display:none">停止计时</button>
+</div>
 </div>
 <div class="card">
 <h3>📋 时间记录</h3>
@@ -123,236 +139,401 @@ input:checked+.slider:before{transform:translateX(26px)}
 <div id="page-data" style="display:none">
 <div class="card">
 <h3>💾 数据管理</h3>
-<p style="margin-bottom:1rem;color:#666">导出您的所有数据，或从备份恢复</p>
+<p style="margin:1rem 0;color:#666">您的数据已自动同步到云端</p>
 <div class="export-box">
 <button class="btn export-btn" onclick="exportData()">📤 导出数据</button>
 <button class="btn btn-secondary export-btn" onclick="document.getElementById('importFile').click()">📥 导入数据</button>
 <input type="file" id="importFile" style="display:none" accept=".json" onchange="importData(this)">
 </div>
 </div>
-<div class="card">
-<h3>🗑️ 数据清理</h3>
-<button class="btn btn-danger" onclick="clearAllData()">清空所有数据</button>
-</div>
 </div>
 <div id="page-set" style="display:none">
 <div class="card">
-<h3>⚙️ 基本设置</h3>
+<h3>⚙️ 设置</h3>
 <div class="setting-item">
 <div style="display:flex;justify-content:space-between;align-items:center">
-<span>深色模式</span>
+<span>🌙 深色模式</span>
 <label class="switch"><input type="checkbox" id="darkMode" onchange="toggleDarkMode(this.checked)"><span class="slider"></span></label>
 </div>
 </div>
 </div>
 <div class="card">
 <h3>ℹ️ 关于</h3>
-<p>智能时间管家 MVP v1.0</p>
-<p style="color:#666;font-size:0.9rem">基于纯前端的时间管理工具</p>
+<p>智能时间管家 v1.0</p>
+<p style="color:#666;font-size:0.9rem;margin-top:0.5rem">数据已同步到云端，换设备也能继续使用</p>
+</div>
+</div>
+<div id="page-profile" style="display:none">
+<div class="card">
+<h3>👤 个人中心</h3>
+<div class="form-group">
+<label>昵称</label>
+<input type="text" id="profileName" placeholder="你的昵称">
+</div>
+<div class="form-group">
+<label>邮箱</label>
+<input type="email" id="profileEmail" disabled>
+</div>
+<div class="form-group">
+<label>个人简介</label>
+<textarea id="profileBio" rows="3" placeholder="介绍一下自己"></textarea>
+</div>
+<button class="btn" onclick="saveProfile()">保存资料</button>
 </div>
 </div>
 </div>
 <script>
-const USERS_KEY = 'stm_users';
-const DATA_KEY = 'stm_data';
-const USER_KEY = "stm_current_user";
-const SETTINGS_KEY = 'stm_settings';
+const API_URL = 'https://smart-time-manager-auth.xxjzone01.workers.dev';
+const CURRENT_KEY = 'stm_current_user';
+const TOKEN_KEY = 'stm_token';
 
-function getData() {
-    var s = localStorage.getItem(DATA_KEY);
-    if (!s) return {users:[],tasks:[],records:[]};
-    try { return JSON.parse(s); } 
-    catch(e) { return {users:[],tasks:[],records:[]}; }
+let tasks = [];
+let records = [];
+let currentRecordId = null;
+let timerInterval = null;
+let timerStart = null;
+let currentTaskId = null;
+
+// API 调用辅助函数
+async function apiCall(endpoint, options = {}) {
+    const token = localStorage.getItem(TOKEN_KEY);
+    const headers = {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+    };
+    
+    const response = await fetch(`${API_URL}${endpoint}`, {
+        ...options,
+        headers: { ...headers, ...options.headers }
+    });
+    
+    const data = await response.json();
+    if (!response.ok && response.status === 401) {
+        doLogout();
+        throw new Error('登录已过期');
+    }
+    if (!response.ok) {
+        throw new Error(data.error || '请求失败');
+    }
+    return data;
 }
 
-function saveData(data) { localStorage.setItem(DATA_KEY, JSON.stringify(data)); }
-function getSettings() { var s = localStorage.getItem(SETTINGS_KEY); return s ? JSON.parse(s) : {}; }
-function saveSetting(key, value) { var settings = getSettings(); settings[key] = value; localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); }
-
-function toggleDarkMode(enabled) {
-    saveSetting('darkMode', enabled);
-    document.body.classList.toggle('dark', enabled);
-    document.querySelectorAll('.ai-tip').forEach(function(el){el.classList.toggle('dark',enabled)});
+function getUser() {
+    const token = localStorage.getItem(TOKEN_KEY);
+    const email = localStorage.getItem(CURRENT_KEY);
+    if (!token || !email) {
+        window.location.href = 'login.html';
+        return null;
+    }
+    return { token, email };
 }
 
-var userId = localStorage.getItem(USER_KEY);
-if (!userId) {
+function doLogout() {
+    localStorage.removeItem(CURRENT_KEY);
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem('stm_user_name');
     window.location.href = 'login.html';
 }
 
-var timerInterval = null, timerStart = null, currentRecordId = null;
-
+// 页面切换
 function showPage(page) {
-    document.querySelectorAll('.nav-item').forEach(function(el){el.classList.remove('active')});
-    document.getElementById('nav-'+page).classList.add('active');
-    ['dash','task','timer','data','set'].forEach(function(p){document.getElementById('page-'+p).style.display='none'});
-    document.getElementById('page-'+page).style.display = 'block';
-    if (page === 'dash') { loadStats(); }
+    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+    document.getElementById('nav-' + page).classList.add('active');
+    ['dash', 'task', 'timer', 'data', 'set', 'profile'].forEach(p => {
+        document.getElementById('page-' + p).style.display = p === page ? 'block' : 'none';
+    });
+    if (page === 'dash') loadStats();
     if (page === 'task') loadTasks();
     if (page === 'timer') loadTimes();
-    if (page === 'set') loadSettings();
+    if (page === 'profile') loadProfile();
 }
 
-function loadStats() {
-    var data = getData();
-    var tasks = (data.tasks || []).filter(function(t){return t.userId == userId});
-    var records = (data.records || []).filter(function(r){return r.userId == userId});
-    document.getElementById('total').textContent = tasks.length;
-    document.getElementById('done').textContent = tasks.filter(function(t){return t.status==='COMPLETED'}).length;
-    document.getElementById('doing').textContent = tasks.filter(function(t){return t.status!=='COMPLETED'}).length;
-    var totalMs = 0; records.forEach(function(r){ if (r.end && r.start) totalMs += new Date(r.end) - new Date(r.start); });
-    document.getElementById('hours').textContent = Math.round(totalMs/3600000*10)/10;
+// 加载统计数据
+async function loadStats() {
+    try {
+        const data = await apiCall('/api/tasks');
+        tasks = data.tasks || [];
+        const done = tasks.filter(t => t.status === 'COMPLETED').length;
+        const doing = tasks.filter(t => t.status === 'TODO').length;
+        document.getElementById('total').textContent = tasks.length;
+        document.getElementById('done').textContent = done;
+        document.getElementById('doing').textContent = doing;
+        
+        // 计算总时间
+        const recordsData = await apiCall('/api/records');
+        records = recordsData.records || [];
+        let totalMs = 0;
+        records.forEach(r => {
+            if (r.end_time && r.start_time) {
+                totalMs += (new Date(r.end_time) - new Date(r.start_time));
+            }
+        });
+        document.getElementById('hours').textContent = Math.round(totalMs / 3600000 * 10) / 10;
+    } catch (e) {
+        console.error('加载统计失败:', e);
+    }
 }
 
-function doAddTask() {
-    var title = document.getElementById('taskTitle').value.trim();
-    var priority = document.getElementById('taskPriority').value;
-    var taskDate = document.getElementById('taskDate').value;
+// 任务管理
+async function loadTasks() {
+    try {
+        const data = await apiCall('/api/tasks');
+        tasks = data.tasks || [];
+        const list = document.getElementById('taskList');
+        if (tasks.length === 0) {
+            list.innerHTML = '<li class="task-item">暂无任务</li>';
+            return;
+        }
+        list.innerHTML = tasks.map(t => {
+            const color = t.priority === 'HIGH' ? 'red' : t.priority === 'MEDIUM' ? 'orange' : 'green';
+            const statusBtn = t.status === 'COMPLETED' ? 
+                `<button class="btn-sm btn-secondary" onclick="toggleTask(${t.id})">↩️</button>` :
+                `<button class="btn-sm btn-success" onclick="toggleTask(${t.id})">✓</button>`;
+            return `<li class="task-item">
+                <div><strong>${t.title}</strong><span style="color:${color};margin-left:0.5rem">[${t.priority}]</span></div>
+                <div class="task-btns">${statusBtn}<button class="btn-sm btn-danger" onclick="delTask(${t.id})">🗑️</button></div>
+            </li>`;
+        }).join('');
+    } catch (e) {
+        console.error('加载任务失败:', e);
+    }
+}
+
+async function doAddTask() {
+    const title = document.getElementById('taskTitle').value.trim();
+    const priority = document.getElementById('taskPriority').value;
+    const task_date = document.getElementById('taskDate').value;
+    
     if (!title) { alert('请输入任务标题'); return; }
     
-    var data = getData();
-    if (!data.tasks) data.tasks = [];
-    data.tasks.push({
-        id: Date.now(),
-        userId: userId,
-        title: title,
-        priority: priority,
-        status: 'TODO',
-        taskDate: taskDate || null,
-        created: new Date().toISOString()
-    });
-    saveData(data);
-    document.getElementById('taskTitle').value = '';
-    document.getElementById('taskDate').value = '';
-    loadTasks(); loadStats();
-}
-
-function loadTasks() {
-    var data = getData();
-    var tasks = (data.tasks || []).filter(function(t){return t.userId == userId}).reverse();
-    var list = document.getElementById('taskList');
-    if (tasks.length === 0) { list.innerHTML = '<li class="task-item">暂无任务</li>'; return; }
-    var html = '';
-    tasks.forEach(function(t){
-        var color = t.priority==='HIGH'?'red':t.priority==='MEDIUM'?'orange':'green';
-        var dateStr = t.taskDate ? ' 📅 '+t.taskDate : '';
-        html += '<li class="task-item"><div><strong>'+t.title+'</strong><span style="color:'+color+'">['+t.priority+']</span>'+dateStr+'</div><div class="task-btns"><button class="btn-sm btn-success" onclick="toggleTask('+t.id+')">'+(t.status==='COMPLETED'?'还原':'完成')+'</button><button class="btn-sm btn-danger" onclick="delTask('+t.id+')">删除</button></div></div>';
-    });
-    list.innerHTML = html;
-}
-
-function toggleTask(id) {
-    var data = getData();
-    var task = (data.tasks || []).find(function(t){return t.id===id});
-    if (task) { task.status = task.status==='COMPLETED'?'TODO':'COMPLETED'; saveData(data); loadTasks(); loadStats(); }
-}
-
-function delTask(id) {
-    if (!confirm('确定删除？')) return;
-    var data = getData();
-    data.tasks = (data.tasks || []).filter(function(t){return t.id!==id});
-    saveData(data); loadTasks(); loadStats();
-}
-
-function doStartTimer() {
-    var data = getData();
-    if (!data.records) data.records = [];
-    var record = {id:Date.now(),userId:userId,start:new Date().toISOString()};
-    data.records.push(record);
-    saveData(data);
-    currentRecordId = record.id;
-    timerStart = Date.now();
-    document.getElementById('startBtn').style.display = 'none';
-    document.getElementById('stopBtn').style.display = 'inline-block';
-    timerInterval = setInterval(function(){
-        var elapsed = Math.floor((Date.now()-timerStart)/1000);
-        document.getElementById('timerDisplay').textContent = String(Math.floor(elapsed/3600)).padStart(2,'0')+':'+String(Math.floor((elapsed%3600)/60)).padStart(2,'0')+':'+String(elapsed%60).padStart(2,'0');
-    },1000);
-}
-
-function doStopTimer() {
-    if (currentRecordId) {
-        var data = getData();
-        var record = (data.records || []).find(function(r){return r.id===currentRecordId});
-        if (record) { record.end = new Date().toISOString(); saveData(data); }
+    try {
+        await apiCall('/api/tasks', {
+            method: 'POST',
+            body: JSON.stringify({ title, priority, task_date })
+        });
+        document.getElementById('taskTitle').value = '';
+        document.getElementById('taskDate').value = '';
+        loadTasks();
+        loadStats();
+    } catch (e) {
+        alert('添加失败: ' + e.message);
     }
-    clearInterval(timerInterval);
-    timerStart = null; currentRecordId = null;
-    document.getElementById('timerDisplay').textContent = '00:00:00';
-    document.getElementById('startBtn').style.display = 'inline-block';
-    document.getElementById('stopBtn').style.display = 'none';
-    loadTimes(); loadStats();
 }
 
-function loadTimes() {
-    var data = getData();
-    var records = (data.records || []).filter(function(r){return r.userId==userId}).reverse();
-    var list = document.getElementById('timeList');
-    if (records.length === 0) { list.innerHTML = '<li class="task-item">暂无记录</li>'; return; }
-    var html = '';
-    records.slice(0,10).forEach(function(r){
-        var start = new Date(r.start);
-        var mins = r.end ? Math.round((new Date(r.end)-new Date(r.start))/60000) : '进行中';
-        html += '<li class="task-item"><div>'+start.toLocaleString()+'</div><div>'+(typeof mins==='number'?mins+'分钟':mins)+'</div></li>';
-    });
-    list.innerHTML = html;
+async function toggleTask(id) {
+    const task = tasks.find(t => t.id === id);
+    if (!task) return;
+    const newStatus = task.status === 'COMPLETED' ? 'TODO' : 'COMPLETED';
+    try {
+        await apiCall('/api/tasks', {
+            method: 'PUT',
+            body: JSON.stringify({ id, status: newStatus })
+        });
+        loadTasks();
+        loadStats();
+    } catch (e) {
+        alert('更新失败: ' + e.message);
+    }
 }
 
-function exportData() {
-    var data = getData();
-    var userTasks = (data.tasks || []).filter(function(t){return t.userId == userId});
-    var userRecords = (data.records || []).filter(function(r){return r.userId == userId});
-    var exportObj = {tasks: userTasks, records: userRecords, exportDate: new Date().toISOString()};
-    var blob = new Blob([JSON.stringify(exportObj, null, 2)], {type:'application/json'});
-    var a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'smart-time-manager-mvp-backup-' + new Date().toISOString().split('T')[0] + '.json';
-    a.click();
-    alert('数据导出成功！');
+async function delTask(id) {
+    if (!confirm('确定删除任务？')) return;
+    try {
+        await apiCall('/api/tasks', {
+            method: 'DELETE',
+            body: JSON.stringify({ id })
+        });
+        loadTasks();
+        loadStats();
+    } catch (e) {
+        alert('删除失败: ' + e.message);
+    }
 }
 
-function importData(input) {
-    var file = input.files[0];
+// 计时功能
+async function loadTimes() {
+    try {
+        const data = await apiCall('/api/records');
+        records = data.records || [];
+        const list = document.getElementById('timeList');
+        if (records.length === 0) {
+            list.innerHTML = '<li class="task-item">暂无记录</li>';
+            return;
+        }
+        list.innerHTML = records.slice(0, 10).map(r => {
+            const start = new Date(r.start_time);
+            const mins = r.duration ? Math.round(r.duration / 60) : '计时中';
+            return `<li class="task-item">
+                <div>${start.toLocaleString()}</div>
+                <div>${mins === '计时中' ? '🔴 计时中' : mins + '分钟'}</div>
+            </li>`;
+        }).join('');
+    } catch (e) {
+        console.error('加载记录失败:', e);
+    }
+}
+
+async function doStartTimer() {
+    // 选择任务开始计时
+    if (tasks.length === 0) {
+        alert('请先创建任务');
+        showPage('task');
+        return;
+    }
+    
+    const taskId = prompt('请输入要计时的任务ID:\n\n' + tasks.map(t => `${t.id}: ${t.title}`).join('\n'));
+    if (!taskId) return;
+    
+    const task = tasks.find(t => t.id == taskId);
+    if (!task) {
+        alert('任务不存在');
+        return;
+    }
+    
+    try {
+        const data = await apiCall('/api/records/start', {
+            method: 'POST',
+            body: JSON.stringify({ task_id: parseInt(taskId) })
+        });
+        currentRecordId = data.record_id;
+        currentTaskId = parseInt(taskId);
+        timerStart = new Date();
+        
+        document.getElementById('startBtn').style.display = 'none';
+        document.getElementById('stopBtn').style.display = 'inline-block';
+        
+        timerInterval = setInterval(updateTimer, 1000);
+    } catch (e) {
+        alert('开始计时失败: ' + e.message);
+    }
+}
+
+function updateTimer() {
+    if (!timerStart) return;
+    const elapsed = Math.floor((Date.now() - timerStart.getTime()) / 1000);
+    const h = Math.floor(elapsed / 3600).toString().padStart(2, '0');
+    const m = Math.floor((elapsed % 3600) / 60).toString().padStart(2, '0');
+    const s = (elapsed % 60).toString().padStart(2, '0');
+    document.getElementById('timerDisplay').textContent = `${h}:${m}:${s}`;
+}
+
+async function doStopTimer() {
+    if (!currentRecordId) return;
+    
+    try {
+        await apiCall('/api/records/stop', {
+            method: 'POST',
+            body: JSON.stringify({ record_id: currentRecordId })
+        });
+        
+        clearInterval(timerInterval);
+        timerInterval = null;
+        timerStart = null;
+        currentRecordId = null;
+        currentTaskId = null;
+        
+        document.getElementById('timerDisplay').textContent = '00:00:00';
+        document.getElementById('startBtn').style.display = 'inline-block';
+        document.getElementById('stopBtn').style.display = 'none';
+        
+        loadTimes();
+        loadStats();
+    } catch (e) {
+        alert('停止计时失败: ' + e.message);
+    }
+}
+
+// 数据导出导入
+async function exportData() {
+    try {
+        const data = await apiCall('/api/export');
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'smart-time-manager-backup-' + new Date().toISOString().split('T')[0] + '.json';
+        a.click();
+        alert('导出成功！');
+    } catch (e) {
+        alert('导出失败: ' + e.message);
+    }
+}
+
+async function importData(input) {
+    const file = input.files[0];
     if (!file) return;
-    var reader = new FileReader();
-    reader.onload = function(e) {
+    
+    const reader = new FileReader();
+    reader.onload = async function(e) {
         try {
-            var imported = JSON.parse(e.target.result);
-            if (!confirm('导入将合并数据，确定继续？')) return;
-            var currentData = getData();
-            if (!currentData.tasks) currentData.tasks = [];
-            if (!currentData.records) currentData.records = [];
-            if (imported.tasks) imported.tasks.forEach(function(t){t.id=Date.now()+Math.random();t.userId=userId;currentData.tasks.push(t);});
-            if (imported.records) imported.records.forEach(function(r){r.id=Date.now()+Math.random();r.userId=userId;currentData.records.push(r);});
-            saveData(currentData); loadStats(); loadTasks(); alert('导入成功！');
-        } catch(err) { alert('导入失败: ' + err.message); }
+            const data = JSON.parse(e.target.result);
+            const result = await apiCall('/api/import', {
+                method: 'POST',
+                body: JSON.stringify({ tasks: data.tasks, records: data.records })
+            });
+            alert(`导入成功！\n任务: ${result.importedTasks}\n记录: ${result.importedRecords}`);
+            loadTasks();
+            loadStats();
+        } catch (err) {
+            alert('导入失败: ' + err.message);
+        }
     };
     reader.readAsText(file);
 }
 
-function clearAllData() {
-    if (!confirm('确定清空所有数据？')) return;
-    if (!confirm('再次确认：删除所有数据？')) return;
-    var data = getData(); data.tasks = []; data.records = []; saveData(data);
-    loadStats(); loadTasks(); loadTimes(); alert('数据已清空');
+// 个人资料
+async function loadProfile() {
+    try {
+        const data = await apiCall('/api/user/profile');
+        document.getElementById('profileName').value = data.user.name || '';
+        document.getElementById('profileEmail').value = data.user.email || '';
+        document.getElementById('profileBio').value = data.user.bio || '';
+    } catch (e) {
+        console.error('加载资料失败:', e);
+    }
 }
 
-function loadSettings() {
-    var settings = getSettings();
-    document.getElementById('darkMode').checked = settings.darkMode || false;
-    if (settings.darkMode) document.body.classList.add('dark');
+async function saveProfile() {
+    const name = document.getElementById('profileName').value.trim();
+    const bio = document.getElementById('profileBio').value.trim();
+    
+    try {
+        await apiCall('/api/user/profile', {
+            method: 'PUT',
+            body: JSON.stringify({ name, bio })
+        });
+        localStorage.setItem('stm_user_name', name);
+        document.getElementById('userName').textContent = name;
+        alert('保存成功！');
+    } catch (e) {
+        alert('保存失败: ' + e.message);
+    }
 }
 
-function doLogout() {
-    if (confirm('确定退出？')) { localStorage.removeItem(USER_KEY); window.location.href = 'login.html'; }
+// 设置
+function toggleDarkMode(enabled) {
+    document.body.classList.toggle('dark', enabled);
+    localStorage.setItem('stm_dark_mode', enabled);
 }
 
 // 初始化
-(function(){
-    var settings = getSettings();
-    if (settings.darkMode) { document.body.classList.add('dark'); }
+(function init() {
+    const user = getUser();
+    if (!user) return;
+    
+    // 显示用户名
+    const name = localStorage.getItem('stm_user_name') || user.email.split('@')[0];
+    document.getElementById('userName').textContent = name;
+    document.getElementById('userAvatar').textContent = name.charAt(0).toUpperCase();
+    
+    // 深色模式
+    if (localStorage.getItem('stm_dark_mode') === 'true') {
+        document.body.classList.add('dark');
+        document.getElementById('darkMode').checked = true;
+    }
+    
+    // 加载统计数据
+    loadStats();
 })();
-loadStats();
 </script>
 </body>
 </html>
