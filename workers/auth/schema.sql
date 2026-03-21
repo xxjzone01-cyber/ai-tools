@@ -5,7 +5,11 @@ CREATE TABLE IF NOT EXISTS users (
   password TEXT,
   name TEXT,
   avatar TEXT,
+  phone TEXT,
+  bio TEXT,
   provider TEXT DEFAULT 'email',
+  plan TEXT DEFAULT 'free',
+  plan_expires DATETIME,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
@@ -16,7 +20,9 @@ CREATE TABLE IF NOT EXISTS tasks (
   user_id INTEGER NOT NULL,
   title TEXT NOT NULL,
   description TEXT,
-  status TEXT DEFAULT 'pending',
+  status TEXT DEFAULT 'TODO',
+  priority TEXT DEFAULT 'LOW',
+  task_date DATETIME,
   duration INTEGER DEFAULT 0,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
