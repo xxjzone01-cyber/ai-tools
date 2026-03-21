@@ -79,7 +79,8 @@ input:checked+.slider:before{transform:translateX(26px)}
 <div class="header-right">
 <span id="userName"></span>
 <div class="avatar" id="userAvatar">?</div>
-<button class="profile-btn" onclick="showPage('profile')">👤</button>
+<button class="profile-btn" id="profileBtn" onclick="showPage('profile')">👤</button>
+<script>document.getElementById('profileBtn').addEventListener('click',function(){showPage('profile')});</script>
 <button class="logout-btn" onclick="doLogout()">退出</button>
 </div>
 </div>
@@ -89,6 +90,7 @@ input:checked+.slider:before{transform:translateX(26px)}
 <div class="nav-item" id="nav-timer" onclick="showPage('timer')">⏱️ 计时</div>
 <div class="nav-item" id="nav-data" onclick="showPage('data')">💾 数据</div>
 <div class="nav-item" id="nav-set" onclick="showPage('set')">⚙️ 设置</div>
+<div class="nav-item" id="nav-profile" onclick="showPage('profile')">👤</div>
 </div>
 <div class="content">
 <div id="page-dash">
@@ -180,10 +182,169 @@ input:checked+.slider:before{transform:translateX(26px)}
 </div>
 <button class="btn" onclick="saveProfile()">保存资料</button>
 </div>
+<div class="card">
+<h3>💎 会员权益</h3>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin-top:1rem">
+<!-- Free 套餐 -->
+<div style="border:2px solid #ddd;border-radius:12px;padding:1rem;text-align:center" id="planCardFree">
+<div style="font-size:1.2rem;font-weight:bold;margin-bottom:0.5rem">🆓 Free</div>
+<div style="font-size:1.8rem;font-weight:bold;margin-bottom:0.5rem">$0<span style="font-size:0.9rem;font-weight:normal">/forever</span></div>
+<div style="font-size:0.8rem;color:#666;margin-bottom:1rem">For light use</div>
+<div style="text-align:left;font-size:0.85rem">
+<div style="padding:0.3rem 0;color:#28a745">✓ Unlimited Tasks</div>
+<div style="padding:0.3rem 0;color:#28a745">✓ Basic Timer</div>
+<div style="padding:0.3rem 0;color:#28a745">✓ Data Export (JSON)</div>
+<div style="padding:0.3rem 0;color:#28a745">✓ Cloud Sync</div>
+<div style="padding:0.3rem 0;color:#999">✗ AI Analytics</div>
+<div style="padding:0.3rem 0;color:#999">✗ Advanced Export</div>
+<div style="padding:0.3rem 0;color:#999">✗ Statistics Report</div>
+</div>
+<button class="btn" style="margin-top:1rem;background:#6c757d" id="btnFree">当前套餐</button>
+</div>
+<!-- Pro 套餐 -->
+<div style="border:2px solid #667eea;border-radius:12px;padding:1rem;text-align:center;position:relative" id="planCardPro">
+<div style="position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:#ff6b6b;color:#fff;padding:0.2rem 0.8rem;border-radius:10px;font-size:0.7rem">Most Popular</div>
+<div style="font-size:1.2rem;font-weight:bold;margin-bottom:0.5rem;margin-top:0.5rem">💎 Pro</div>
+<div style="font-size:1.8rem;font-weight:bold;margin-bottom:0.5rem">$5<span style="font-size:0.9rem;font-weight:normal">/mo</span></div>
+<div style="font-size:0.8rem;color:#666;margin-bottom:0.5rem">or $48/yr (save 20%)</div>
+<div style="text-align:left;font-size:0.85rem">
+<div style="padding:0.3rem 0;color:#28a745">✓ All Free features</div>
+<div style="padding:0.3rem 0;color:#28a745">✓ AI Analytics</div>
+<div style="padding:0.3rem 0;color:#28a745">✓ Advanced Export (Excel/PDF)</div>
+<div style="padding:0.3rem 0;color:#28a745">✓ Statistics Report</div>
+<div style="padding:0.3rem 0;color:#28a745">✓ Priority Support</div>
+</div>
+<button class="btn" style="margin-top:1rem" id="btnPro" onclick="showPayPal('monthly')">$5/mo</button>
+<button class="btn" style="margin-top:0.5rem;background:rgba(102,126,234,0.8)" id="btnProYear" onclick="showPayPal('yearly')">$48/yr</button>
+</div>
+<!-- Team 套餐 -->
+<div style="border:2px solid #764ba2;border-radius:12px;padding:1rem;text-align:center" id="planCardTeam">
+<div style="font-size:1.2rem;font-weight:bold;margin-bottom:0.5rem">🏢 Team</div>
+<div style="font-size:1.8rem;font-weight:bold;margin-bottom:0.5rem">$18<span style="font-size:0.9rem;font-weight:normal">/user/mo</span></div>
+<div style="font-size:0.8rem;color:#666;margin-bottom:1rem">Min 5 users</div>
+<div style="text-align:left;font-size:0.85rem">
+<div style="padding:0.3rem 0;color:#28a745">✓ All Pro features</div>
+<div style="padding:0.3rem 0;color:#28a745">✓ Team Collaboration</div>
+<div style="padding:0.3rem 0;color:#28a745">✓ Shared Tasks</div>
+<div style="padding:0.3rem 0;color:#28a745">✓ Team Statistics</div>
+<div style="padding:0.3rem 0;color:#28a745">✓ Team Admin</div>
+</div>
+<button class="btn" style="margin-top:1rem;background:#764ba2" id="btnTeam" onclick="showPayPal('team')">$18/user/mo</button>
 </div>
 </div>
+</div>
+</div>
+</div>
+<!-- PayPal Container -->
+<div id="paypal-container" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999">
+<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;padding:1rem;border-radius:8px;max-width:400px;width:90%">
+<div style="text-align:right;cursor:pointer;font-size:1.5rem" onclick="closePayPal()">×</div>
+<div id="paypal-button-container"></div>
+</div>
+</div>
+</div>
+</div>
+<script src="https://www.paypal.com/sdk/js?client-id=sb&currency=USD&intent=capture"></script>
 <script>
 const API_URL = 'https://smart-time-manager-auth.xxjzone01.workers.dev';
+// PayPal 一次性支付
+function showPayPal(type) {
+    const plans = {
+        monthly: { name: 'Pro Monthly', price: '5.00', plan: 'pro' },
+        yearly: { name: 'Pro Yearly', price: '48.00', plan: 'pro' },
+        team: { name: 'Team', price: '18.00', plan: 'team' }
+    };
+    
+    const selectedPlan = plans[type];
+    
+    // 检查 PayPal SDK 是否加载
+    if (typeof paypal === 'undefined') {
+        alert('PayPal SDK 加载失败，请刷新页面重试');
+        return;
+    }
+    
+    // 弹出支付窗口
+    document.getElementById('paypal-container').style.display = 'block';
+    
+    const container = document.getElementById('paypal-button-container');
+    container.innerHTML = '';
+    
+    try {
+        // 使用 PayPal 一次性支付按钮
+        paypal.Buttons({
+            style: {
+                layout: 'vertical',
+                color: 'blue',
+                shape: 'rect',
+                height: 40
+            },
+            createOrder: function(data, actions) {
+                return actions.order.create({
+                    purchase_units: [{
+                        description: selectedPlan.name,
+                        amount: { currency_code: 'USD', value: selectedPlan.price }
+                    }]
+                });
+            },
+            onApprove: function(data, actions) {
+                return actions.order.capture().then(function(details) {
+                    alert('支付成功！感谢购买 ' + selectedPlan.name);
+                    closePayPal();
+                    updateUserPlan(selectedPlan.plan, type === 'yearly' ? 'yearly' : 'monthly');
+                });
+            },
+            onError: function(err) {
+                alert('支付出错: ' + err);
+                closePayPal();
+            },
+            onCancel: function() {
+                closePayPal();
+            }
+        }).render('#paypal-button-container');
+    } catch (e) {
+        alert('PayPal 按钮渲染失败: ' + e.message);
+        closePayPal();
+    }
+}
+
+function closePayPal() {
+    document.getElementById('paypal-container').style.display = 'none';
+    document.getElementById('paypal-button-container').innerHTML = '';
+}
+
+async function updateUserPlan(plan, interval) {
+    try {
+        const expires = new Date();
+        if (interval === 'yearly') {
+            expires.setFullYear(expires.getFullYear() + 1);
+        } else {
+            expires.setMonth(expires.getMonth() + 1);
+        }
+        
+        // 调用后端更新用户套餐
+        const response = await fetch(API_URL + '/api/user/upgrade', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + localStorage.getItem(TOKEN_KEY)
+            },
+            body: JSON.stringify({
+                plan: plan,
+                expires: expires.toISOString()
+            })
+        });
+        
+        if (response.ok) {
+            alert('升级成功！');
+            showPage('profile');
+            loadProfile();
+        } else {
+            alert('更新失败，请稍后重试');
+        }
+    } catch (e) {
+        console.error(e);
+    }
+}
 const CURRENT_KEY = 'stm_current_user';
 const TOKEN_KEY = 'stm_token';
 
@@ -487,8 +648,59 @@ async function loadProfile() {
         document.getElementById('profileName').value = data.user.name || '';
         document.getElementById('profileEmail').value = data.user.email || '';
         document.getElementById('profileBio').value = data.user.bio || '';
+        
+        // 加载用户套餐信息
+        try {
+            const planData = await apiCall('/api/user/plan');
+            const plan = planData.plan || 'free';
+            
+            if (plan === 'pro') {
+                document.getElementById('btnFree').textContent = '已升级';
+                document.getElementById('btnFree').disabled = true;
+                document.getElementById('btnPro').textContent = '✓ Pro 已开通';
+                document.getElementById('btnPro').disabled = true;
+                document.getElementById('btnProYear').textContent = '✓ Pro 已开通';
+                document.getElementById('btnProYear').disabled = true;
+            } else if (plan === 'team') {
+                document.getElementById('btnFree').textContent = '已升级';
+                document.getElementById('btnFree').disabled = true;
+                document.getElementById('btnTeam').textContent = '✓ Team 已开通';
+                document.getElementById('btnTeam').disabled = true;
+            } else {
+                // Free 用户，显示升级按钮
+            }
+        } catch (e) {
+            console.error('加载套餐失败:', e);
+        }
     } catch (e) {
         console.error('加载资料失败:', e);
+    }
+}
+
+// 升级到 Pro
+async function doUpgrade(type) {
+    const planNames = { monthly: 'Pro ($5/月)', yearly: 'Pro ($48/年)', team: 'Team ($18/人/月)' };
+    if (!confirm('确认升级：' + planNames[type] + '？')) return;
+    
+    const params = {
+        monthly: 'plan=pro&interval=monthly&amount=5',
+        yearly: 'plan=pro&interval=yearly&amount=48',
+        team: 'plan=team&interval=monthly&amount=18'
+    };
+    
+    try {
+        const response = await fetch(API_URL + '/api/pay/create?' + params[type], {
+            headers: { 'Authorization': 'Bearer ' + localStorage.getItem(TOKEN_KEY) }
+        });
+        const data = await response.json();
+        
+        if (data.url) {
+            window.location.href = data.url;
+        } else {
+            alert('支付链接生成失败，请稍后重试');
+        }
+    } catch (e) {
+        alert('升级失败: ' + e.message);
     }
 }
 

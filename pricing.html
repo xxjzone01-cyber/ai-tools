@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pricing - Smart Time Manager</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f8f9fa;color:#333}
+.header{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;padding:1.5rem;text-align:center}
+.header h1{font-size:1.8rem;margin-bottom:0.5rem}
+.header p{opacity:0.9}
+.container{max-width:1000px;margin:2rem auto;padding:0 1rem}
+.plans{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.5rem;margin-top:2rem}
+.plan{background:#fff;border-radius:16px;padding:2rem;box-shadow:0 4px 20px rgba(0,0,0,0.1);text-align:center;transition:transform 0.3s}
+.plan:hover{transform:translateY(-5px)}
+.plan.popular{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;position:relative}
+.plan.popular .tag{position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:#ff6b6b;color:#fff;padding:0.3rem 1rem;border-radius:20px;font-size:0.8rem}
+.plan-name{font-size:1.5rem;font-weight:bold;margin-bottom:0.5rem}
+.plan-price{font-size:2.5rem;font-weight:bold;margin:1rem 0}
+.plan-price span{font-size:1rem;font-weight:normal}
+.plan-period{opacity:0.8;font-size:0.9rem}
+.plan-features{list-style:none;margin:1.5rem 0;text-align:left}
+.plan-features li{padding:0.5rem 0;border-bottom:1px solid rgba(0,0,0,0.1)}
+.plan-features li.included{color:#28a745}
+.plan-features li.excluded{color:#999}
+.plan-features li.excluded:before{content:"×";margin-right:0.5rem;color:#ccc}
+.plan-features li.included:before{content:"✓";margin-right:0.5rem}
+.plan.popular .plan-features li.included:before{color:#90EE90}
+.plan.popular .plan-features li.excluded:before{color:#aaa}
+.plan-btn{display:block;width:100%;padding:1rem;border-radius:8px;font-size:1rem;cursor:pointer;transition:all 0.3s}
+.plan-free .plan-btn{background:#6c757d;color:#fff;border:none}
+.plan-pro .plan-btn{background:#28a745;color:#fff;border:none}
+.plan-team .plan-btn{background:#667eea;color:#fff;border:none}
+.plan-btn:hover{opacity:0.9}
+.plan-btn.current{background:#28a745;cursor:default}
+.faq{max-width:600px;margin:3rem auto}
+.faq h2{text-align:center;margin-bottom:1.5rem}
+.faq-item{background:#fff;padding:1rem;margin-bottom:1rem;border-radius:8px}
+.faq-q{font-weight:bold;margin-bottom:0.5rem}
+.faq-a{color:#666;font-size:0.9rem}
+.back-link{display:block;text-align:center;margin-top:2rem;color:#667eea;text-decoration:none}
+</style>
+</head>
+<body>
+<div class="header">
+<h1>💎 Choose Your Plan</h1>
+<p>Flexible pricing for your needs</p>
+</div>
+<div class="container">
+<div class="plans">
+<div class="plan plan-free">
+<div class="plan-name">Free</div>
+<div class="plan-price">$0<span>/forever</span></div>
+<div class="plan-period">For light use</div>
+<ul class="plan-features">
+<li class="included">✓ Unlimited Tasks</li>
+<li class="included">✓ Basic Timer</li>
+<li class="included">✓ Data Export (JSON)</li>
+<li class="included">✓ Cloud Sync</li>
+<li class="excluded">✗ AI Analytics</li>
+<li class="excluded">✗ Advanced Export</li>
+<li class="excluded">✗ Statistics Report</li>
+</ul>
+<button class="plan-btn current">Current Plan</button>
+</div>
+<div class="plan plan-pro popular">
+<span class="tag">Most Popular</span>
+<div class="plan-name">Pro</div>
+<div class="plan-price">$5<span>/mo</span></div>
+<div class="plan-period">or $48/yr (save 20%)</div>
+<ul class="plan-features">
+<li class="included">✓ All Free features</li>
+<li class="included">✓ AI Analytics</li>
+<li class="included">✓ Advanced Export (Excel/PDF)</li>
+<li class="included">✓ Statistics Report</li>
+<li class="included">✓ Priority Support</li>
+</ul>
+<button class="plan-btn" onclick="upgrade('pro_monthly')">Upgrade - $5/mo</button>
+<button class="plan-btn" onclick="upgrade('pro_yearly')" style="margin-top:0.5rem;background:rgba(255,255,255,0.2)">Yearly - $48/yr</button>
+</div>
+<div class="plan plan-team">
+<div class="plan-name">Team</div>
+<div class="plan-price">$18<span>/user/mo</span></div>
+<div class="plan-period">Min 5 users</div>
+<ul class="plan-features">
+<li class="included">✓ All Pro features</li>
+<li class="included">✓ Team Collaboration</li>
+<li class="included">✓ Shared Tasks</li>
+<li class="included">✓ Team Statistics</li>
+<li class="included">✓ Team Admin</li>
+</ul>
+<button class="plan-btn" onclick="upgrade('team')">Contact Us</button>
+</div>
+</div>
+<div class="faq">
+<h2>FAQ</h2>
+<div class="faq-item">
+<div class="faq-q">Q: Does Free plan expire?</div>
+<div class="faq-a">A: Never. Free plan is free forever with all basic features.</div>
+</div>
+<div class="faq-item">
+<div class="faq-q">Q: Can I cancel anytime?</div>
+<div class="faq-a">A: Yes. You can cancel anytime. You'll keep premium features until expiry.</div>
+</div>
+<div class="faq-item">
+<div class="faq-q">Q: What payment methods?</div>
+<div class="faq-a">A: PayPal, Credit Card, and more.</div>
+</div>
+</div>
+<a href="index.html" class="back-link">← Back to App</a>
+</div>
+<script>
+const API_URL = 'https://smart-time-manager-auth.xxjzone01.workers.dev';
+const TOKEN_KEY = 'stm_token';
+
+function getUser() {
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (!token) {
+        window.location.href = 'login.html';
+        return null;
+    }
+    return { token };
+}
+
+async function upgrade(plan) {
+    const user = getUser();
+    if (!user) return;
+    
+    if (plan === 'pro_monthly') {
+        window.location.href = API_URL + '/api/pay/create?plan=pro&interval=monthly&amount=5';
+    } else if (plan === 'pro_yearly') {
+        window.location.href = API_URL + '/api/pay/create?plan=pro&interval=yearly&amount=48';
+    } else if (plan === 'team') {
+        alert('Team plan: contact@smart-time-manager.xyz');
+    }
+}
+
+// Load current user plan
+(async function init() {
+    const user = getUser();
+    if (!user) return;
+    
+    try {
+        const response = await fetch(API_URL + '/api/user/plan', {
+            headers: { 'Authorization': 'Bearer ' + user.token }
+        });
+        const data = await response.json();
+        
+        if (data.plan && data.plan !== 'free') {
+            document.querySelector('.plan-free .plan-btn').textContent = 'Upgraded';
+            document.querySelector('.plan-free .plan-btn').disabled = true;
+        }
+    } catch (e) {
+        console.error(e);
+    }
+})();
+</script>
+</body>
+</html>

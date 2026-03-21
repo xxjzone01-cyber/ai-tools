@@ -1,5 +1,10 @@
 // Cloudflare Worker - 用户认证和任务管理 API
 
+// PayPal 配置
+const PAYPAL_CLIENT_ID = 'AUcfiseYUpqiOF9hlKvgVDNZBG6QdqeenLMP2jmcbely_I-n9yraKL0PzT7ZgyxYW6tMP73q7YpVSr8p';
+const PAYPAL_CLIENT_SECRET = 'EH0nqGQhopoALBFd0AXBOqoPdHjlBHo_rmqbj49nDI4QFdsQpVMq1_I6KT5YKsj_FIe69pW0Nw_M7xxC';
+const PAYPAL_MODE = 'live'; // sandbox 或 live
+
 // 从环境变量读取 Google OAuth 配置
 const GOOGLE_CLIENT_ID = 'YOUR_GOOGLE_CLIENT_ID';
 const GOOGLE_CLIENT_SECRET = 'YOUR_GOOGLE_CLIENT_SECRET';
@@ -10,11 +15,48 @@ async function verifyToken(env, token) {
   try {
     const data = JSON.parse(atob(token));
     if (data.exp < Date.now()) return null;
-    const user = await env.DB.prepare('SELECT id, email, name, avatar, provider FROM users WHERE id = ?').bind(data.userId).first();
+    const user = await env.DB.prepare('SELECT id, email, name, avatar, provider, plan, plan_expires FROM users WHERE id = ?').bind(data.userId).first();
     return user;
   } catch {
     return null;
   }
+}
+
+// 获取套餐功能列表
+function getPlanFeatures(plan) {
+  const features = {
+    free: {
+      name: '免费版',
+      tasks: 'unlimited',
+      timer: true,
+      export: 'json',
+      ai: false,
+      advancedExport: false,
+      stats: false,
+      team: false
+    },
+    pro: {
+      name: 'Pro',
+      tasks: 'unlimited',
+      timer: true,
+      export: 'all',
+      ai: true,
+      advancedExport: true,
+      stats: true,
+      team: false
+    },
+    team: {
+      name: '团队版',
+      tasks: 'unlimited',
+      timer: true,
+      export: 'all',
+      ai: true,
+      advancedExport: true,
+      stats: true,
+      team: true
+    }
+  };
+  return features[plan] || features.free;
 }
 
 // 验证请求的辅助函数
@@ -378,6 +420,181 @@ export default {
         return new Response(JSON.stringify({ success: true, importedTasks, importedRecords }), { 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
         });
+      }
+
+      // ==================== 会员系统 ====================
+      
+      // 获取用户套餐信息
+      if (path === '/api/user/plan' && request.method === 'GET') {
+        const auth = await verifyRequest(request, env);
+        if (auth.error) return new Response(JSON.stringify({ error: auth.error }), { status: auth.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        
+        const user = auth.user;
+        const plan = user.plan || 'free';
+        const now = new Date();
+        const isExpired = user.plan_expires && new Date(user.plan_expires) < now;
+        
+        // 检查是否需要降级
+        if (plan !== 'free' && isExpired) {
+          await env.DB.prepare('UPDATE users SET plan = "free", plan_expires = NULL WHERE id = ?').bind(user.id).run();
+          return new Response(JSON.stringify({ plan: 'free', features: getPlanFeatures('free') }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        }
+        
+        return new Response(JSON.stringify({ 
+          plan, 
+          plan_expires: user.plan_expires,
+          features: getPlanFeatures(plan) 
+        }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+
+      // ==================== PayPal 支付 ====================
+      
+      // 创建 PayPal 订阅
+      if (path === '/api/pay/create' && request.method === 'GET') {
+        const auth = await verifyRequest(request, env);
+        if (auth.error) return new Response(JSON.stringify({ error: auth.error }), { status: auth.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        
+        const urlParams = new URL(request.url).searchParams;
+        const plan = urlParams.get('plan') || 'pro';
+        const interval = urlParams.get('interval') || 'monthly';
+        const amount = parseInt(urlParams.get('amount') || '5');
+        
+        // PayPal API 配置
+        const clientId = PAYPAL_CLIENT_ID;
+        const clientSecret = PAYPAL_CLIENT_SECRET;
+        const baseUrl = PAYPAL_MODE === 'live' 
+          ? 'https://api-m.paypal.com' 
+          : 'https://api-m.sandbox.paypal.com';
+        
+        // 获取 Access Token
+        const authRes = await fetch(`${baseUrl}/v1/oauth2/token`, {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Basic ' + btoa(clientId + ':' + clientSecret),
+            'Content-Type': 'application/x-www-form-urlencoded'
+          },
+          body: 'grant_type=client_credentials'
+        });
+        
+        const authData = await authRes.json();
+        const accessToken = authData.access_token;
+        
+        if (!accessToken) {
+          return new Response(JSON.stringify({ error: 'Failed to get PayPal token' }), {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+        
+        // 创建订阅计划
+        const planId = plan === 'pro' ? (interval === 'yearly' ? 'PRO_YEARLY' : 'PRO_MONTHLY') : 'TEAM_MONTHLY';
+        
+        // 构建 PayPal 订阅链接
+        const frontendUrl = env.FRONTEND_URL || 'https://63d5a33d.smart-time-manager.pages.dev';
+        
+        // PayPal Checkout URL
+        const checkoutUrl = PAYPAL_MODE === 'live'
+          ? 'https://www.paypal.com/checkoutnow'
+          : 'https://www.sandbox.paypal.com/checkoutnow';
+        
+        // 生成订阅参数
+        const subscribeData = {
+          userId: auth.user.id,
+          plan: plan,
+          interval: interval,
+          amount: amount
+        };
+        
+        const subscribeToken = btoa(JSON.stringify(subscribeData));
+        
+        // 返回 PayPal 支付链接
+        const paypalLink = `${checkoutUrl}?token=${subscribeToken}&mode=${PAYPAL_MODE}`;
+        
+        return new Response(JSON.stringify({ 
+          url: paypalLink,
+          plan: plan,
+          amount: amount,
+          interval: interval
+        }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+
+      // PayPal 支付回调
+      if (path === '/api/pay/callback' && request.method === 'GET') {
+        const { token: subscribeToken, success } = Object.fromEntries(url.searchParams);
+        
+        if (!subscribeToken) {
+          return new Response('Missing token', { status: 400 });
+        }
+        
+        try {
+          const subscribeData = JSON.parse(atob(subscribeToken));
+          const { userId, plan, interval } = subscribeData;
+          
+          // 计算过期时间
+          const expires = new Date();
+          if (interval === 'yearly') {
+            expires.setFullYear(expires.getFullYear() + 1);
+          } else {
+            expires.setMonth(expires.getMonth() + 1);
+          }
+          
+          // 更新用户套餐
+          await env.DB.prepare('UPDATE users SET plan = ?, plan_expires = ? WHERE id = ?')
+            .bind(plan, expires.toISOString(), userId).run();
+          
+          const frontendUrl = env.FRONTEND_URL || 'https://63d5a33d.smart-time-manager.pages.dev';
+          
+          // 跳转到成功页面
+          return new Response(null, {
+            status: 302,
+            headers: { Location: `${frontendUrl}/index.html?upgrade=success` }
+          });
+        } catch (e) {
+          return new Response('Invalid token', { status: 400 });
+        }
+      }
+
+      // PayPal Webhook (支付成功通知)
+      if (path === '/api/pay/webhook' && request.method === 'POST') {
+        try {
+          const payload = await request.json();
+          
+          // 验证 webhook 签名（生产环境需要）
+          // 这里简化处理
+          
+          const eventType = payload.event_type;
+          
+          if (eventType === 'PAYMENT.SALE.COMPLETED' || eventType === 'BILLING.SUBSCRIPTION.CREATED') {
+            const resource = payload.resource;
+            const customId = resource.custom_id; // 包含用户ID
+            const plan = resource.plan_id;
+            
+            // 更新用户订阅状态
+            // 实际需要解析 customId 获取用户ID和订阅信息
+          }
+          
+          return new Response(JSON.stringify({ received: true }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        } catch (e) {
+          return new Response(JSON.stringify({ error: e.message }), {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+      }
+
+      // 用户升级套餐（支付成功后调用）
+      if (path === '/api/user/upgrade' && request.method === 'POST') {
+        const auth = await verifyRequest(request, env);
+        if (auth.error) return new Response(JSON.stringify({ error: auth.error }), { status: auth.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        
+        const { plan, expires } = await request.json();
+        
+        await env.DB.prepare('UPDATE users SET plan = ?, plan_expires = ? WHERE id = ?')
+          .bind(plan, expires, auth.user.id).run();
+        
+        return new Response(JSON.stringify({ success: true, plan }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
 
       return new Response('Not Found', { status: 404 });
