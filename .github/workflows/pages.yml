@@ -46,5 +46,5 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           projectName: smart-time-manager
-          directory: './frontend/build'
+          directory: './build'
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
