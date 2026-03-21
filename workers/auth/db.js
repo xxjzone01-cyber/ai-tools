@@ -9,7 +9,11 @@ class DB {
         password TEXT,
         name TEXT,
         avatar TEXT,
+        phone TEXT,
+        bio TEXT,
         provider TEXT DEFAULT 'email',
+        plan TEXT DEFAULT 'free',
+        plan_expires DATETIME,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
       );
@@ -19,7 +23,9 @@ class DB {
         user_id INTEGER NOT NULL,
         title TEXT NOT NULL,
         description TEXT,
-        status TEXT DEFAULT 'pending',
+        status TEXT DEFAULT 'TODO',
+        priority TEXT DEFAULT 'LOW',
+        task_date DATETIME,
         duration INTEGER DEFAULT 0,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -48,18 +54,18 @@ class DB {
 
   // 根据 ID 获取用户
   static async getUserById(db, id) {
-    const result = await db.prepare('SELECT id, email, name, avatar, provider, created_at FROM users WHERE id = ?').bind(id).first();
+    const result = await db.prepare('SELECT id, email, name, avatar, phone, bio, provider, plan, plan_expires, created_at FROM users WHERE id = ?').bind(id).first();
     return result;
   }
 
   // 创建用户
-  static async createUser(db, { email, password, name, avatar, provider = 'email' }) {
+  static async createUser(db, { email, password, name, avatar, phone, bio, provider = 'email' }) {
     const hashedPassword = password ? await this.hashPassword(password) : '';
     
     const result = await db.prepare(`
-      INSERT INTO users (email, password, name, avatar, provider)
-      VALUES (?, ?, ?, ?, ?)
-    `).bind(email, hashedPassword, name, avatar || '', provider).run();
+      INSERT INTO users (email, password, name, avatar, phone, bio, provider)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `).bind(email, hashedPassword, name, avatar || '', phone || '', bio || '', provider).run();
 
     return this.getUserById(db, result.lastInsertRowid);
   }
@@ -73,6 +79,16 @@ class DB {
     if (!valid) return null;
     
     return user;
+  }
+
+  // 更新用户资料
+  static async updateUserProfile(db, userId, { name, bio, phone }) {
+    await db.prepare(`
+      UPDATE users SET name = ?, bio = ?, phone = ?, updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `).bind(name || '', bio || '', phone || '', userId).run();
+    
+    return await this.getUserById(db, userId);
   }
 
   // 简单密码哈希（生产环境应使用 bcrypt 或类似库）
@@ -90,20 +106,33 @@ class DB {
     return await db.prepare('SELECT * FROM tasks WHERE user_id = ? ORDER BY created_at DESC').bind(userId).all();
   }
 
-  static async createTask(db, { userId, title, description }) {
+  static async createTask(db, { userId, title, description, priority, task_date }) {
     const result = await db.prepare(`
-      INSERT INTO tasks (user_id, title, description)
-      VALUES (?, ?, ?)
-    `).bind(userId, title, description || '').run();
+      INSERT INTO tasks (user_id, title, description, priority, status, task_date)
+      VALUES (?, ?, ?, ?, 'TODO', ?)
+    `).bind(userId, title, description || '', priority || 'LOW', task_date || null).run();
     
     return await db.prepare('SELECT * FROM tasks WHERE id = ?').bind(result.lastInsertRowid).first();
   }
 
-  static async updateTaskStatus(db, taskId, status, duration) {
+  static async updateTask(db, taskId, { title, description, priority, status, task_date }) {
     await db.prepare(`
-      UPDATE tasks SET status = ?, duration = ?, updated_at = CURRENT_TIMESTAMP
+      UPDATE tasks SET 
+        title = ?, 
+        description = ?, 
+        priority = ?, 
+        status = ?, 
+        task_date = ?,
+        updated_at = CURRENT_TIMESTAMP
       WHERE id = ?
-    `).bind(status, duration || 0, taskId).run();
+    `).bind(title || '', description || '', priority || 'LOW', status || 'TODO', task_date || null, taskId).run();
+    
+    return await db.prepare('SELECT * FROM tasks WHERE id = ?').bind(taskId).first();
+  }
+
+  static async deleteTask(db, taskId) {
+    const result = await db.prepare('DELETE FROM tasks WHERE id = ?').bind(taskId).run();
+    return result.success;
   }
 
   // 时间记录操作
@@ -123,6 +152,10 @@ class DB {
           duration = (julianday(datetime('now')) - julianday(start_time)) * 86400
       WHERE id = ?
     `).bind(logId).run();
+  }
+
+  static async getRecordsByUser(db, userId) {
+    return await db.prepare('SELECT * FROM time_logs WHERE user_id = ? ORDER BY start_time DESC').bind(userId).all();
   }
 }
 
