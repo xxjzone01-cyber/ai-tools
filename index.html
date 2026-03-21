@@ -422,7 +422,7 @@ async function doAddTask() {
         id: Date.now(),
         title: title,
         priority: priority,
-        due_date: dueDate,
+        due_date: dueDate || null,  // 空值改为null而不是undefined
         status: 'TODO',
         created_at: new Date().toISOString()
     };
