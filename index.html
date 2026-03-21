@@ -80,7 +80,6 @@ input:checked+.slider:before{transform:translateX(26px)}
 <span id="userName"></span>
 <div class="avatar" id="userAvatar">?</div>
 <button class="profile-btn" id="profileBtn" onclick="showPage('profile')">👤</button>
-<script>document.getElementById('profileBtn').addEventListener('click',function(){showPage('profile')});</script>
 <button class="logout-btn" onclick="doLogout()">退出</button>
 </div>
 </div>
@@ -185,7 +184,6 @@ input:checked+.slider:before{transform:translateX(26px)}
 <div class="card">
 <h3>💎 会员权益</h3>
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin-top:1rem">
-<!-- Free 套餐 -->
 <div style="border:2px solid #ddd;border-radius:12px;padding:1rem;text-align:center" id="planCardFree">
 <div style="font-size:1.2rem;font-weight:bold;margin-bottom:0.5rem">🆓 Free</div>
 <div style="font-size:1.8rem;font-weight:bold;margin-bottom:0.5rem">$0<span style="font-size:0.9rem;font-weight:normal">/forever</span></div>
@@ -201,7 +199,6 @@ input:checked+.slider:before{transform:translateX(26px)}
 </div>
 <button class="btn" style="margin-top:1rem;background:#6c757d" id="btnFree">当前套餐</button>
 </div>
-<!-- Pro 套餐 -->
 <div style="border:2px solid #667eea;border-radius:12px;padding:1rem;text-align:center;position:relative" id="planCardPro">
 <div style="position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:#ff6b6b;color:#fff;padding:0.2rem 0.8rem;border-radius:10px;font-size:0.7rem">Most Popular</div>
 <div style="font-size:1.2rem;font-weight:bold;margin-bottom:0.5rem;margin-top:0.5rem">💎 Pro</div>
@@ -217,7 +214,6 @@ input:checked+.slider:before{transform:translateX(26px)}
 <button class="btn" style="margin-top:1rem" id="btnPro" onclick="showPayPal('monthly')">$5/mo</button>
 <button class="btn" style="margin-top:0.5rem;background:rgba(102,126,234,0.8)" id="btnProYear" onclick="showPayPal('yearly')">$48/yr</button>
 </div>
-<!-- Team 套餐 -->
 <div style="border:2px solid #764ba2;border-radius:12px;padding:1rem;text-align:center" id="planCardTeam">
 <div style="font-size:1.2rem;font-weight:bold;margin-bottom:0.5rem">🏢 Team</div>
 <div style="font-size:1.8rem;font-weight:bold;margin-bottom:0.5rem">$18<span style="font-size:0.9rem;font-weight:normal">/user/mo</span></div>
@@ -235,7 +231,6 @@ input:checked+.slider:before{transform:translateX(26px)}
 </div>
 </div>
 </div>
-<!-- PayPal Container -->
 <div id="paypal-container" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999">
 <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;padding:1rem;border-radius:8px;max-width:400px;width:90%">
 <div style="text-align:right;cursor:pointer;font-size:1.5rem" onclick="closePayPal()">×</div>
@@ -246,107 +241,11 @@ input:checked+.slider:before{transform:translateX(26px)}
 </div>
 <script src="https://www.paypal.com/sdk/js?client-id=sb&currency=USD&intent=capture"></script>
 <script>
-const API_URL = 'https://smart-time-manager-auth.xxjzone01.workers.dev';
-// PayPal 一次性支付
-function showPayPal(type) {
-    const plans = {
-        monthly: { name: 'Pro Monthly', price: '5.00', plan: 'pro' },
-        yearly: { name: 'Pro Yearly', price: '48.00', plan: 'pro' },
-        team: { name: 'Team', price: '18.00', plan: 'team' }
-    };
-    
-    const selectedPlan = plans[type];
-    
-    // 检查 PayPal SDK 是否加载
-    if (typeof paypal === 'undefined') {
-        alert('PayPal SDK 加载失败，请刷新页面重试');
-        return;
-    }
-    
-    // 弹出支付窗口
-    document.getElementById('paypal-container').style.display = 'block';
-    
-    const container = document.getElementById('paypal-button-container');
-    container.innerHTML = '';
-    
-    try {
-        // 使用 PayPal 一次性支付按钮
-        paypal.Buttons({
-            style: {
-                layout: 'vertical',
-                color: 'blue',
-                shape: 'rect',
-                height: 40
-            },
-            createOrder: function(data, actions) {
-                return actions.order.create({
-                    purchase_units: [{
-                        description: selectedPlan.name,
-                        amount: { currency_code: 'USD', value: selectedPlan.price }
-                    }]
-                });
-            },
-            onApprove: function(data, actions) {
-                return actions.order.capture().then(function(details) {
-                    alert('支付成功！感谢购买 ' + selectedPlan.name);
-                    closePayPal();
-                    updateUserPlan(selectedPlan.plan, type === 'yearly' ? 'yearly' : 'monthly');
-                });
-            },
-            onError: function(err) {
-                alert('支付出错: ' + err);
-                closePayPal();
-            },
-            onCancel: function() {
-                closePayPal();
-            }
-        }).render('#paypal-button-container');
-    } catch (e) {
-        alert('PayPal 按钮渲染失败: ' + e.message);
-        closePayPal();
-    }
-}
-
-function closePayPal() {
-    document.getElementById('paypal-container').style.display = 'none';
-    document.getElementById('paypal-button-container').innerHTML = '';
-}
-
-async function updateUserPlan(plan, interval) {
-    try {
-        const expires = new Date();
-        if (interval === 'yearly') {
-            expires.setFullYear(expires.getFullYear() + 1);
-        } else {
-            expires.setMonth(expires.getMonth() + 1);
-        }
-        
-        // 调用后端更新用户套餐
-        const response = await fetch(API_URL + '/api/user/upgrade', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + localStorage.getItem(TOKEN_KEY)
-            },
-            body: JSON.stringify({
-                plan: plan,
-                expires: expires.toISOString()
-            })
-        });
-        
-        if (response.ok) {
-            alert('升级成功！');
-            showPage('profile');
-            loadProfile();
-        } else {
-            alert('更新失败，请稍后重试');
-        }
-    } catch (e) {
-        console.error(e);
-    }
-}
+const STORAGE_KEY = 'stm_tasks';
 const CURRENT_KEY = 'stm_current_user';
 const TOKEN_KEY = 'stm_token';
+const API_URL = 'https://smart-time-manager-auth.xxjzone01.workers.dev';
+const API_TIMEOUT = 5000; // API调用超时时间（毫秒）
 
 let tasks = [];
 let records = [];
@@ -354,8 +253,9 @@ let currentRecordId = null;
 let timerInterval = null;
 let timerStart = null;
 let currentTaskId = null;
+let useLocalStorage = false; // 降级到本地存储的标志
 
-// API 调用辅助函数
+// 带超时和降级的API调用
 async function apiCall(endpoint, options = {}) {
     const token = localStorage.getItem(TOKEN_KEY);
     const headers = {
@@ -363,26 +263,56 @@ async function apiCall(endpoint, options = {}) {
         ...(token ? { 'Authorization': `Bearer ${token}` } : {})
     };
     
-    const response = await fetch(`${API_URL}${endpoint}`, {
-        ...options,
-        headers: { ...headers, ...options.headers }
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
     
-    const data = await response.json();
-    if (!response.ok && response.status === 401) {
-        doLogout();
-        throw new Error('登录已过期');
+    try {
+        const response = await fetch(`${API_URL}${endpoint}`, {
+            ...options,
+            headers: { ...headers, ...options.headers },
+            signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+        
+        const data = await response.json();
+        if (!response.ok && response.status === 401) {
+            doLogout();
+            throw new Error('登录已过期');
+        }
+        if (!response.ok) {
+            throw new Error(data.error || '请求失败');
+        }
+        return data;
+    } catch (error) {
+        clearTimeout(timeoutId);
+        console.warn('API调用失败，降级到本地存储:', error.message);
+        throw error;
     }
-    if (!response.ok) {
-        throw new Error(data.error || '请求失败');
+}
+
+// 本地存储操作（降级方案）
+function getLocalData() {
+    try {
+        const data = localStorage.getItem(STORAGE_KEY);
+        return data ? JSON.parse(data) : { tasks: [], records: [] };
+    } catch (e) {
+        return { tasks: [], records: [] };
     }
-    return data;
+}
+
+function saveLocalData(data) {
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    } catch (e) {
+        console.error('保存本地数据失败:', e);
+    }
 }
 
 function getUser() {
     const token = localStorage.getItem(TOKEN_KEY);
     const email = localStorage.getItem(CURRENT_KEY);
-    if (!token || !email) {
+    if (!email) {
         window.location.href = 'login.html';
         return null;
     }
@@ -396,7 +326,6 @@ function doLogout() {
     window.location.href = 'login.html';
 }
 
-// 页面切换
 function showPage(page) {
     document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
     document.getElementById('nav-' + page).classList.add('active');
@@ -409,147 +338,193 @@ function showPage(page) {
     if (page === 'profile') loadProfile();
 }
 
-// 加载统计数据
 async function loadStats() {
     try {
         const data = await apiCall('/api/tasks');
         tasks = data.tasks || [];
-        const done = tasks.filter(t => t.status === 'COMPLETED').length;
-        const doing = tasks.filter(t => t.status === 'TODO').length;
-        document.getElementById('total').textContent = tasks.length;
-        document.getElementById('done').textContent = done;
-        document.getElementById('doing').textContent = doing;
-        
-        // 计算总时间
+    } catch (e) {
+        console.log('降级到本地存储加载任务');
+        const localData = getLocalData();
+        tasks = localData.tasks || [];
+    }
+    
+    const done = tasks.filter(t => t.status === 'COMPLETED').length;
+    const doing = tasks.filter(t => t.status === 'TODO').length;
+    document.getElementById('total').textContent = tasks.length;
+    document.getElementById('done').textContent = done;
+    document.getElementById('doing').textContent = doing;
+    
+    try {
         const recordsData = await apiCall('/api/records');
         records = recordsData.records || [];
-        let totalMs = 0;
-        records.forEach(r => {
-            if (r.end_time && r.start_time) {
-                totalMs += (new Date(r.end_time) - new Date(r.start_time));
-            }
-        });
-        document.getElementById('hours').textContent = Math.round(totalMs / 3600000 * 10) / 10;
     } catch (e) {
-        console.error('加载统计失败:', e);
+        console.log('降级到本地存储加载记录');
+        const localData = getLocalData();
+        records = localData.records || [];
     }
+    
+    let totalMs = 0;
+    records.forEach(r => {
+        if (r.end_time && r.start_time) {
+            totalMs += (new Date(r.end_time) - new Date(r.start_time));
+        }
+    });
+    document.getElementById('hours').textContent = Math.round(totalMs / 3600000 * 10) / 10;
 }
 
-// 任务管理
 async function loadTasks() {
     try {
         const data = await apiCall('/api/tasks');
         tasks = data.tasks || [];
-        const list = document.getElementById('taskList');
-        if (tasks.length === 0) {
-            list.innerHTML = '<li class="task-item">暂无任务</li>';
-            return;
-        }
-        list.innerHTML = tasks.map(t => {
-            const color = t.priority === 'HIGH' ? 'red' : t.priority === 'MEDIUM' ? 'orange' : 'green';
-            const statusBtn = t.status === 'COMPLETED' ? 
-                `<button class="btn-sm btn-secondary" onclick="toggleTask(${t.id})">↩️</button>` :
-                `<button class="btn-sm btn-success" onclick="toggleTask(${t.id})">✓</button>`;
-            return `<li class="task-item">
-                <div><strong>${t.title}</strong><span style="color:${color};margin-left:0.5rem">[${t.priority}]</span></div>
-                <div class="task-btns">${statusBtn}<button class="btn-sm btn-danger" onclick="delTask(${t.id})">🗑️</button></div>
-            </li>`;
-        }).join('');
     } catch (e) {
-        console.error('加载任务失败:', e);
+        console.log('降级到本地存储加载任务');
+        const localData = getLocalData();
+        tasks = localData.tasks || [];
     }
+    
+    const list = document.getElementById('taskList');
+    if (tasks.length === 0) {
+        list.innerHTML = '<li class="task-item">暂无任务</li>';
+        return;
+    }
+    list.innerHTML = tasks.map(t => {
+        const color = t.priority === 'HIGH' ? 'red' : t.priority === 'MEDIUM' ? 'orange' : 'green';
+        const statusBtn = t.status === 'COMPLETED' 
+            ? `<button class="btn btn-sm btn-secondary" onclick="toggleTask(${t.id})">已完成</button>`
+            : `<button class="btn btn-sm btn-success" onclick="toggleTask(${t.id})">完成</button>`;
+        return `
+            <li class="task-item">
+                <div>
+                    <strong>${t.title}</strong>
+                    <span style="color:${color};font-size:0.8rem;margin-left:0.5rem">[${t.priority}]</span>
+                    ${t.due_date ? `<span style="color:#666;font-size:0.8rem;margin-left:0.5rem">${t.due_date}</span>` : ''}
+                </div>
+                <div class="task-btns">
+                    ${statusBtn}
+                    <button class="btn btn-sm btn-danger" onclick="deleteTask(${t.id})">删除</button>
+                </div>
+            </li>
+        `;
+    }).join('');
 }
 
 async function doAddTask() {
     const title = document.getElementById('taskTitle').value.trim();
     const priority = document.getElementById('taskPriority').value;
-    const task_date = document.getElementById('taskDate').value;
+    const dueDate = document.getElementById('taskDate').value;
     
-    if (!title) { alert('请输入任务标题'); return; }
+    if (!title) {
+        alert('请输入任务标题');
+        return;
+    }
+    
+    const task = {
+        id: Date.now(),
+        title: title,
+        priority: priority,
+        due_date: dueDate,
+        status: 'TODO',
+        created_at: new Date().toISOString()
+    };
     
     try {
         await apiCall('/api/tasks', {
             method: 'POST',
-            body: JSON.stringify({ title, priority, task_date })
+            body: JSON.stringify(task)
         });
-        document.getElementById('taskTitle').value = '';
-        document.getElementById('taskDate').value = '';
-        loadTasks();
-        loadStats();
     } catch (e) {
-        alert('添加失败: ' + e.message);
+        console.log('API失败，保存到本地存储');
+        const localData = getLocalData();
+        localData.tasks.push(task);
+        saveLocalData(localData);
     }
+    
+    document.getElementById('taskTitle').value = '';
+    document.getElementById('taskDate').value = '';
+    loadTasks();
+    loadStats();
 }
 
 async function toggleTask(id) {
     const task = tasks.find(t => t.id === id);
     if (!task) return;
-    const newStatus = task.status === 'COMPLETED' ? 'TODO' : 'COMPLETED';
+    
+    task.status = task.status === 'COMPLETED' ? 'TODO' : 'COMPLETED';
+    
     try {
-        await apiCall('/api/tasks', {
-            method: 'PUT',
-            body: JSON.stringify({ id, status: newStatus })
+        await apiCall(`/api/tasks/${id}`, {
+            method: 'PATCH',
+            body: JSON.stringify({ status: task.status })
         });
-        loadTasks();
-        loadStats();
     } catch (e) {
-        alert('更新失败: ' + e.message);
+        console.log('API失败，更新本地存储');
+        const localData = getLocalData();
+        const idx = localData.tasks.findIndex(t => t.id === id);
+        if (idx !== -1) {
+            localData.tasks[idx] = task;
+            saveLocalData(localData);
+        }
     }
+    
+    loadTasks();
+    loadStats();
 }
 
-async function delTask(id) {
-    if (!confirm('确定删除任务？')) return;
+async function deleteTask(id) {
+    if (!confirm('确定要删除这个任务吗？')) return;
+    
     try {
-        await apiCall('/api/tasks', {
-            method: 'DELETE',
-            body: JSON.stringify({ id })
-        });
-        loadTasks();
-        loadStats();
+        await apiCall(`/api/tasks/${id}`, { method: 'DELETE' });
     } catch (e) {
-        alert('删除失败: ' + e.message);
+        console.log('API失败，删除本地存储中的任务');
+        const localData = getLocalData();
+        localData.tasks = localData.tasks.filter(t => t.id !== id);
+        saveLocalData(localData);
     }
+    
+    loadTasks();
+    loadStats();
 }
 
-// 计时功能
 async function loadTimes() {
     try {
         const data = await apiCall('/api/records');
         records = data.records || [];
-        const list = document.getElementById('timeList');
-        if (records.length === 0) {
-            list.innerHTML = '<li class="task-item">暂无记录</li>';
-            return;
-        }
-        list.innerHTML = records.slice(0, 10).map(r => {
-            const start = new Date(r.start_time);
-            const mins = r.duration ? Math.round(r.duration / 60) : '计时中';
-            return `<li class="task-item">
-                <div>${start.toLocaleString()}</div>
-                <div>${mins === '计时中' ? '🔴 计时中' : mins + '分钟'}</div>
-            </li>`;
-        }).join('');
     } catch (e) {
-        console.error('加载记录失败:', e);
+        console.log('降级到本地存储加载记录');
+        const localData = getLocalData();
+        records = localData.records || [];
     }
+    
+    const list = document.getElementById('timeList');
+    if (records.length === 0) {
+        list.innerHTML = '<li class="task-item">暂无记录</li>';
+        return;
+    }
+    list.innerHTML = records.map(r => {
+        const task = tasks.find(t => t.id === r.task_id);
+        const taskTitle = task ? task.title : '未知任务';
+        const start = new Date(r.start_time).toLocaleString('zh-CN');
+        const end = r.end_time ? new Date(r.end_time).toLocaleString('zh-CN') : '进行中';
+        const duration = r.end_time 
+            ? Math.round((new Date(r.end_time) - new Date(r.start_time)) / 60000) + ' 分钟'
+            : '-';
+        return `
+            <li class="task-item">
+                <div>
+                    <strong>${taskTitle}</strong>
+                    <br>
+                    <span style="color:#666;font-size:0.8rem">${start} - ${end}</span>
+                </div>
+                <div style="font-weight:bold">${duration}</div>
+            </li>
+        `;
+    }).join('');
 }
 
 async function doStartTimer() {
-    // 选择任务开始计时
-    if (tasks.length === 0) {
-        alert('请先创建任务');
-        showPage('task');
-        return;
-    }
-    
-    const taskId = prompt('请输入要计时的任务ID:\n\n' + tasks.map(t => `${t.id}: ${t.title}`).join('\n'));
+    const taskId = prompt('请输入任务ID（或留空记录当前时间）');
     if (!taskId) return;
-    
-    const task = tasks.find(t => t.id == taskId);
-    if (!task) {
-        alert('任务不存在');
-        return;
-    }
     
     try {
         const data = await apiCall('/api/records/start', {
@@ -604,19 +579,14 @@ async function doStopTimer() {
     }
 }
 
-// 数据导出导入
 async function exportData() {
-    try {
-        const data = await apiCall('/api/export');
-        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = 'smart-time-manager-backup-' + new Date().toISOString().split('T')[0] + '.json';
-        a.click();
-        alert('导出成功！');
-    } catch (e) {
-        alert('导出失败: ' + e.message);
-    }
+    const localData = getLocalData();
+    const blob = new Blob([JSON.stringify(localData, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'smart-time-manager-backup-' + new Date().toISOString().split('T')[0] + '.json';
+    a.click();
+    alert('导出成功！');
 }
 
 async function importData(input) {
@@ -624,16 +594,18 @@ async function importData(input) {
     if (!file) return;
     
     const reader = new FileReader();
-    reader.onload = async function(e) {
+    reader.onload = function(e) {
         try {
             const data = JSON.parse(e.target.result);
-            const result = await apiCall('/api/import', {
-                method: 'POST',
-                body: JSON.stringify({ tasks: data.tasks, records: data.records })
-            });
-            alert(`导入成功！\n任务: ${result.importedTasks}\n记录: ${result.importedRecords}`);
+            
+            // 保存到本地存储
+            saveLocalData(data);
+            
+            alert(`导入成功！\n任务: ${data.tasks?.length || 0}\n记录: ${data.records?.length || 0}`);
+            
             loadTasks();
             loadStats();
+            loadTimes();
         } catch (err) {
             alert('导入失败: ' + err.message);
         }
@@ -641,66 +613,21 @@ async function importData(input) {
     reader.readAsText(file);
 }
 
-// 个人资料
 async function loadProfile() {
     try {
         const data = await apiCall('/api/user/profile');
         document.getElementById('profileName').value = data.user.name || '';
         document.getElementById('profileEmail').value = data.user.email || '';
         document.getElementById('profileBio').value = data.user.bio || '';
-        
-        // 加载用户套餐信息
-        try {
-            const planData = await apiCall('/api/user/plan');
-            const plan = planData.plan || 'free';
-            
-            if (plan === 'pro') {
-                document.getElementById('btnFree').textContent = '已升级';
-                document.getElementById('btnFree').disabled = true;
-                document.getElementById('btnPro').textContent = '✓ Pro 已开通';
-                document.getElementById('btnPro').disabled = true;
-                document.getElementById('btnProYear').textContent = '✓ Pro 已开通';
-                document.getElementById('btnProYear').disabled = true;
-            } else if (plan === 'team') {
-                document.getElementById('btnFree').textContent = '已升级';
-                document.getElementById('btnFree').disabled = true;
-                document.getElementById('btnTeam').textContent = '✓ Team 已开通';
-                document.getElementById('btnTeam').disabled = true;
-            } else {
-                // Free 用户，显示升级按钮
-            }
-        } catch (e) {
-            console.error('加载套餐失败:', e);
-        }
+        document.getElementById('userName').textContent = data.user.name || data.user.email?.split('@')[0] || '?';
+        document.getElementById('userAvatar').textContent = (data.user.name || data.user.email?.split('@')[0] || '?').charAt(0).toUpperCase();
     } catch (e) {
-        console.error('加载资料失败:', e);
-    }
-}
-
-// 升级到 Pro
-async function doUpgrade(type) {
-    const planNames = { monthly: 'Pro ($5/月)', yearly: 'Pro ($48/年)', team: 'Team ($18/人/月)' };
-    if (!confirm('确认升级：' + planNames[type] + '？')) return;
-    
-    const params = {
-        monthly: 'plan=pro&interval=monthly&amount=5',
-        yearly: 'plan=pro&interval=yearly&amount=48',
-        team: 'plan=team&interval=monthly&amount=18'
-    };
-    
-    try {
-        const response = await fetch(API_URL + '/api/pay/create?' + params[type], {
-            headers: { 'Authorization': 'Bearer ' + localStorage.getItem(TOKEN_KEY) }
-        });
-        const data = await response.json();
-        
-        if (data.url) {
-            window.location.href = data.url;
-        } else {
-            alert('支付链接生成失败，请稍后重试');
-        }
-    } catch (e) {
-        alert('升级失败: ' + e.message);
+        // 降级：从localStorage获取用户信息
+        const email = localStorage.getItem(CURRENT_KEY);
+        document.getElementById('profileName').value = localStorage.getItem('stm_user_name') || '';
+        document.getElementById('profileEmail').value = email || '';
+        document.getElementById('userName').textContent = localStorage.getItem('stm_user_name') || email?.split('@')[0] || '?';
+        document.getElementById('userAvatar').textContent = (localStorage.getItem('stm_user_name') || email?.split('@')[0] || '?').charAt(0).toUpperCase();
     }
 }
 
@@ -708,44 +635,150 @@ async function saveProfile() {
     const name = document.getElementById('profileName').value.trim();
     const bio = document.getElementById('profileBio').value.trim();
     
+    // 先保存到localStorage
+    localStorage.setItem('stm_user_name', name);
+    
     try {
         await apiCall('/api/user/profile', {
-            method: 'PUT',
+            method: 'PATCH',
             body: JSON.stringify({ name, bio })
         });
-        localStorage.setItem('stm_user_name', name);
-        document.getElementById('userName').textContent = name;
         alert('保存成功！');
     } catch (e) {
-        alert('保存失败: ' + e.message);
+        console.log('API保存失败，已保存到本地');
+        alert('保存成功！（本地模式）');
+    }
+    
+    document.getElementById('userName').textContent = name || localStorage.getItem(CURRENT_KEY)?.split('@')[0] || '?';
+    document.getElementById('userAvatar').textContent = (name || localStorage.getItem(CURRENT_KEY)?.split('@')[0] || '?').charAt(0).toUpperCase();
+}
+
+function toggleDarkMode(enabled) {
+    if (enabled) {
+        document.body.classList.add('dark');
+    } else {
+        document.body.classList.remove('dark');
     }
 }
 
-// 设置
-function toggleDarkMode(enabled) {
-    document.body.classList.toggle('dark', enabled);
-    localStorage.setItem('stm_dark_mode', enabled);
+// PayPal支付相关代码保持不变
+function showPayPal(type) {
+    const plans = {
+        monthly: { name: 'Pro Monthly', price: '5.00', plan: 'pro' },
+        yearly: { name: 'Pro Yearly', price: '48.00', plan: 'pro' },
+        team: { name: 'Team', price: '18.00', plan: 'team' }
+    };
+    
+    const selectedPlan = plans[type];
+    
+    if (typeof paypal === 'undefined') {
+        alert('PayPal SDK 加载失败，请刷新页面重试');
+        return;
+    }
+    
+    document.getElementById('paypal-container').style.display = 'block';
+    
+    const container = document.getElementById('paypal-button-container');
+    container.innerHTML = '';
+    
+    try {
+        paypal.Buttons({
+            style: {
+                layout: 'vertical',
+                color: 'blue',
+                shape: 'rect',
+                height: 40
+            },
+            createOrder: function(data, actions) {
+                return actions.order.create({
+                    purchase_units: [{
+                        description: selectedPlan.name,
+                        amount: { currency_code: 'USD', value: selectedPlan.price }
+                    }]
+                });
+            },
+            onApprove: function(data, actions) {
+                return actions.order.capture().then(function(details) {
+                    alert('支付成功！感谢购买 ' + selectedPlan.name);
+                    closePayPal();
+                    updateUserPlan(selectedPlan.plan, type === 'yearly' ? 'yearly' : 'monthly');
+                });
+            },
+            onError: function(err) {
+                alert('支付出错: ' + err);
+                closePayPal();
+            },
+            onCancel: function() {
+                closePayPal();
+            }
+        }).render('#paypal-button-container');
+    } catch (e) {
+        alert('PayPal 按钮渲染失败: ' + e.message);
+        closePayPal();
+    }
 }
 
-// 初始化
-(function init() {
+function closePayPal() {
+    document.getElementById('paypal-container').style.display = 'none';
+    document.getElementById('paypal-button-container').innerHTML = '';
+}
+
+async function updateUserPlan(plan, interval) {
+    try {
+        const expires = new Date();
+        if (interval === 'yearly') {
+            expires.setFullYear(expires.getFullYear() + 1);
+        } else {
+            expires.setMonth(expires.getMonth() + 1);
+        }
+        
+        const response = await fetch(API_URL + '/api/user/upgrade', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + localStorage.getItem(TOKEN_KEY)
+            },
+            body: JSON.stringify({
+                plan: plan,
+                expires: expires.toISOString()
+            })
+        });
+        
+        const data = await response.json();
+        if (response.ok) {
+            alert('升级成功！');
+        } else {
+            throw new Error(data.error || '升级失败');
+        }
+    } catch (error) {
+        alert('升级失败: ' + error.message);
+    }
+}
+
+// 页面初始化
+window.addEventListener('DOMContentLoaded', async function() {
+    console.log('页面加载开始');
+    
     const user = getUser();
     if (!user) return;
     
-    // 显示用户名
-    const name = localStorage.getItem('stm_user_name') || user.email.split('@')[0];
-    document.getElementById('userName').textContent = name;
-    document.getElementById('userAvatar').textContent = name.charAt(0).toUpperCase();
+    // 异步加载数据，不阻塞页面
+    loadStats().catch(err => {
+        console.log('初始加载统计失败:', err);
+    });
     
-    // 深色模式
-    if (localStorage.getItem('stm_dark_mode') === 'true') {
+    loadProfile().catch(err => {
+        console.log('初始加载个人资料失败:', err);
+    });
+    
+    // 恢复深色模式设置
+    if (localStorage.getItem('darkMode') === 'true') {
         document.body.classList.add('dark');
         document.getElementById('darkMode').checked = true;
     }
     
-    // 加载统计数据
-    loadStats();
-})();
+    console.log('页面初始化完成');
+});
 </script>
 </body>
 </html>
